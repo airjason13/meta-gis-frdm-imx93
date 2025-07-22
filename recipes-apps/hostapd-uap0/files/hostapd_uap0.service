@@ -7,4 +7,4 @@ ExecStart=/usr/bin/hostapd_uap0.sh
 Restart=always
 
 [Install]
-WantedBy=weston.target
+WantedBy=multi-user.target
