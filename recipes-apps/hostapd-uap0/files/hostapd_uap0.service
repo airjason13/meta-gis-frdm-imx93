@@ -1,0 +1,10 @@
+[Unit]
+Description=Setup Hostapd on uap0 interface
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/hostapd_uap0.sh
+Restart=always
+
+[Install]
+WantedBy=weston.target
