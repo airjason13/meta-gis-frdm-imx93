@@ -24,7 +24,9 @@ static void *event_thread(void *arg)
 {
     struct gpiod_edge_event_buffer *buffer;
     int64_t timeout_ns = 5LL * 1000000000; // 5 秒
-
+    uint32_t pre_edge = 0;
+    uint32_t cur_edge = 0;
+    uint32_t rising_edge_count = 0;   
     // 建立使用者空間事件緩衝區
     buffer = gpiod_edge_event_buffer_new(64);
     if (!buffer) {
@@ -38,8 +40,10 @@ static void *event_thread(void *arg)
             fprintf(stderr, "wait_edge_events error: %s\n", strerror(errno));
             break;
         } else if (ret == 0) {
+            printf("timeout!\n");
             continue; // timeout
         }
+        // printf("ret : %d\n", ret);
 
         // 讀取所有事件
         ret = gpiod_line_request_read_edge_events(request, buffer, 64);
@@ -54,10 +58,22 @@ static void *event_thread(void *arg)
             struct gpiod_edge_event *e = gpiod_edge_event_buffer_get_event(buffer, i);
             uint64_t ts = gpiod_edge_event_get_timestamp_ns(e);
             unsigned int offs = gpiod_edge_event_get_line_offset(e);
-            const char *etype = (gpiod_edge_event_get_event_type(e) == GPIOD_EDGE_EVENT_RISING_EDGE)
+
+            // 先確認實際電平
+            /*enum gpiod_line_value val = gpiod_line_request_get_value(request, offs);
+            if (val != GPIOD_LINE_VALUE_ACTIVE)
+                continue;  // 不是 high，就忽略*/
+            cur_edge = gpiod_edge_event_get_event_type(e);
+            if (pre_edge != GPIOD_EDGE_EVENT_RISING_EDGE){
+                if(cur_edge == GPIOD_EDGE_EVENT_RISING_EDGE){ 
+                    rising_edge_count += 1;
+                    const char *etype = (gpiod_edge_event_get_event_type(e) == GPIOD_EDGE_EVENT_RISING_EDGE)
                                     ? "RISING" : "FALLING";
-            printf("[offset %u] %s at %lu.%09lu\n",
-                   offs, etype, (unsigned long)(ts/1000000000), (unsigned long)(ts%1000000000));
+                    printf("%lld, nevents: %lld, [offset %u] %s at %lu.%09lu, count: %u \n",
+                        i, nevents,offs, etype, (unsigned long)(ts/1000000000), (unsigned long)(ts%1000000000), rising_edge_count);
+                }
+            }
+            pre_edge = cur_edge;
         }
     }
 
@@ -67,6 +83,7 @@ static void *event_thread(void *arg)
 
 int main(int argc, char **argv)
 {
+    const char* chipname;
     struct gpiod_chip *chip;
     struct gpiod_request_config *req_cfg;
     struct gpiod_line_settings *ls;
@@ -78,12 +95,12 @@ int main(int argc, char **argv)
         fprintf(stderr, "Usage: %s <gpiochipX> <line_offset>\n", argv[0]);
         return EXIT_FAILURE;
     }
-
+    chipname = argv[1];
     line_offset = strtoul(argv[2], NULL, 0);
     signal(SIGINT, sigint_handler);
 
     // 1. 開啟 GPIO chip
-    chip = gpiod_chip_open(argv[1]);
+    chip = gpiod_chip_open(chipname);
     if (!chip) {
         fprintf(stderr, "Open chip %s failed: %s\n", argv[1], strerror(errno));
         return EXIT_FAILURE;
@@ -96,8 +113,14 @@ int main(int argc, char **argv)
 
     // 3. 建立並設定 line settings
     ls = gpiod_line_settings_new();
+    printf("add bias on ls\n");
+    gpiod_line_settings_set_bias(ls, GPIOD_LINE_BIAS_PULL_DOWN);
+    
+    //printf("add anti jitter\n");
+    //gpiod_line_settings_set_debounce_period_us(ls, 10000);    
+
     gpiod_line_settings_set_direction(ls, GPIOD_LINE_DIRECTION_INPUT);     // input :contentReference[oaicite:4]{index=4}
-    gpiod_line_settings_set_edge_detection(ls, GPIOD_LINE_EDGE_RISING);      // both edges :contentReference[oaicite:5]{index=5}
+    gpiod_line_settings_set_edge_detection(ls, GPIOD_LINE_EDGE_BOTH);      // both edges :contentReference[oaicite:5]{index=5}
 
     // 4. 建立並設定 line config
     lc = gpiod_line_config_new();
