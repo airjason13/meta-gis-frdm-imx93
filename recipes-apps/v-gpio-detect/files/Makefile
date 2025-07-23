@@ -1,15 +1,38 @@
-CFLAGS := -Wall -Wextra -O2
-LDLIBS := -lgpiod -lpthread
+MAKE_DIR = $(PWD)
 
-TARGET := v-gpio-detect
-SRC := v-gpio-detect.c
+APP = app
+UTILDBGLIB = utildbglib
 
-.PHONY: all clean
+APP_DIR := $(MAKE_DIR)/$(APP)
+UTILDBGLIB_DIR := $(MAKE_DIR)/$(UTILDBGLIB)
 
-all: $(TARGET)
+INC_SRCH_PATH := -I$(MAKE_DIR)
+INC_SRCH_PATH += -I$(MAKE_DIR)/recipe-sysroot/usr/include/SDL2/
+INC_SRCH_PATH += -I$(MAKE_DIR)/recipe-sysroot/usr/include/libusb-1.0/
+INC_SRCH_PATH += -I$(UTILDBGLIB_DIR)
 
-$(TARGET): $(SRC)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+LIB_SRCH_PATH := -L$(MAKE_DIR)
+LIB_SRCH_PATH += -L$(MAKE_DIR)/libs/
 
+CFLAGS :=
+CFLAGS += $(INC_SRCH_PATH) $(LIB_SRCH_PATH)
+CFLAGS += -DDEBUG -D_REENTRANT
+CFLAGS += -Wall 
+CFLAGS += -D_GNU_SOURCE 
+
+LDFLAGS :=
+LDFLAGS += -lutildbg
+LDFLAGS += -lpthread
+LDFLAGS += -lgpiod
+
+export MAKE_DIR CFLAGS LDFLAGS LIBS INC_SRCH_PATH LIB_SRCH_PATH
+
+all: 
+	echo $(CFLAGS)
+	$(MAKE) -C $(UTILDBGLIB_DIR) -f $(UTILDBGLIB).mk
+	$(MAKE) -C $(APP_DIR) -f $(APP).mk
+	
+.PHONY: clean
 clean:
-	rm -f $(TARGET)
+	$(MAKE) -C $(UTILDBGLIB_DIR) -f $(UTILDBGLIB).mk clean
+	$(MAKE) -C $(APP_DIR) -f $(APP).mk clean

@@ -1,7 +1,8 @@
 LICENSE="CLOSED"
 FILESEXTRAPATHS:append := "${THISDIR}/files"
 
-SRC_URI += "file://v-gpio-detect.c \
+SRC_URI += "file://app/ \
+            file://utildbglib/ \
             file://Makefile \
             "
 
@@ -16,7 +17,7 @@ do_compile() {
 do_install() {
     install -d ${D}/${bindir}/
 
-    install -m 777 v-gpio-detect ${D}/${bindir}/
+    install -m 777 prog/v-gpio-detect ${D}/${bindir}/
     
 }
 
