@@ -1,0 +1,73 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright 2024 NXP
+ */
+
+#include "imx93-11x11-frdm.dts"
+
+&lvds_bridge {
+	status = "disabled";
+};
+
+&ldb {
+	status = "disabled";
+};
+
+&ldb_phy {
+	status = "disabled";
+};
+
+&dphy {
+	status = "okay";
+};
+
+&dsi {
+	status = "okay";
+
+	ports {
+		port@1{
+			reg = <1>;
+
+			dsi_to_panel: endpoint {
+				remote-endpoint = <&panel_to_dsi>;
+			};
+		};
+	};
+    
+    panel@0{
+        compatible = "ws,ws_800x480";
+        reg = <0>;
+	    ports {
+		    port@1{
+                panel_to_dsi: endpoint {
+				    remote-endpoint = <&dsi_to_panel>;
+                };
+            };
+        };
+    };
+};
+
+//ws: panel@0 {
+//    compatible = "ws,ws_800x480";
+//    reg = <0>;
+
+//    ports {
+//        port@0 {
+//            reg = <0>;
+//            endpoint {
+//            /* 用 ASCII 连字符 */
+//            remote-endpoint = <&dsi_to_panel>;
+//            };
+//        };
+//    };
+//};
+
+
+
+&lcdif {
+	//assigned-clock-rates = <484000000>, <121000000>, <400000000>, <133333333>;
+	assigned-clock-rates = <400000000>, <50000000>, <400000000>, <133333333>;
+};
+
+&lpi2c1 {
+};

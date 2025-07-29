@@ -1,0 +1,42 @@
+From 51f0630b7a97f60c7ea4ed36ad53e54e54447253 Mon Sep 17 00:00:00 2001
+From: airjason13 <airjason13@gmail.com>
+Date: Fri, 25 Jul 2025 17:24:52 +0800
+Subject: [PATCH] Add waveshare 800x480 panel support
+
+---
+ drivers/gpu/drm/panel/Kconfig  | 8 ++++++++
+ drivers/gpu/drm/panel/Makefile | 1 +
+ 2 files changed, 9 insertions(+)
+
+diff --git a/drivers/gpu/drm/panel/Kconfig b/drivers/gpu/drm/panel/Kconfig
+index 6dc13f2612a3..f13c1f5203dc 100644
+--- a/drivers/gpu/drm/panel/Kconfig
++++ b/drivers/gpu/drm/panel/Kconfig
+@@ -881,4 +881,12 @@ config DRM_PANEL_WKS_101WX001
+ 	  Say Y here if you want to enable support for the WKS
+ 	  101WX001 controller for 1280x800 LCD panel
+ 
++
++config DRM_PANEL_WAVESHARE_800x480
++    tristate "Waveshare 800x480 MIPI-DSI Panel"
++    depends on DRM_MIPI_DSI
++    help
++      Say Y here if you want to enable support for the Waveshare 800x480 panel over MIPI DSI.
++
++
+ endmenu
+diff --git a/drivers/gpu/drm/panel/Makefile b/drivers/gpu/drm/panel/Makefile
+index 2b57de3bf5af..9f6efec2fd89 100644
+--- a/drivers/gpu/drm/panel/Makefile
++++ b/drivers/gpu/drm/panel/Makefile
+@@ -82,6 +82,7 @@ obj-$(CONFIG_DRM_PANEL_TIANMA_TM050RDH03) += panel-tianma-tm050rdh03.o
+ obj-$(CONFIG_DRM_PANEL_TPO_TD028TTEC1) += panel-tpo-td028ttec1.o
+ obj-$(CONFIG_DRM_PANEL_TPO_TD043MTEA1) += panel-tpo-td043mtea1.o
+ obj-$(CONFIG_DRM_PANEL_TPO_TPG110) += panel-tpo-tpg110.o
++obj-$(CONFIG_DRM_PANEL_WAVESHARE_800x480) += panel-ws-800x480.o
+ obj-$(CONFIG_DRM_PANEL_TRULY_NT35597_WQXGA) += panel-truly-nt35597.o
+ obj-$(CONFIG_DRM_PANEL_VISIONOX_RM69299) += panel-visionox-rm69299.o
+ obj-$(CONFIG_DRM_PANEL_VISIONOX_VTDR6130) += panel-visionox-vtdr6130.o
+-- 
+2.34.1
+
