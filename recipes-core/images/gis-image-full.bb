@@ -8,6 +8,11 @@ require recipes-fsl/images/imx-image-multimedia.bb
 
 CONFLICT_DISTRO_FEATURES = "directfb"
 
+IMAGE_BOOT_FILES:append = " imx93-gis-frdm-dsi.dtb \
+                            imx93-11x11-frdm-dsi-gis.dtb \
+                           "
+
+
 IMAGE_INSTALL += " \
     curl \
     packagegroup-imx-ml \
@@ -15,6 +20,8 @@ IMAGE_INSTALL += " \
     ${IMAGE_INSTALL_OPENCV} \
     ${IMAGE_INSTALL_PARSEC} \
     ${IMAGE_INSTALL_PKCS11TOOL} \
+    packagegroup-gis-fonts \
+    packagegroup-gis-packages \
 "
 
 IMAGE_INSTALL_OPENCV              = ""
@@ -36,3 +43,5 @@ IMAGE_INSTALL_PARSEC = " \
 IMAGE_INSTALL_PKCS11TOOL = ""
 IMAGE_INSTALL_PKCS11TOOL:mx8-nxp-bsp = "opensc pkcs11-provider"
 IMAGE_INSTALL_PKCS11TOOL:mx9-nxp-bsp = "opensc pkcs11-provider"
+
+

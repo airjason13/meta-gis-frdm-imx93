@@ -5,8 +5,9 @@ SRC_URI += "file://0001-Add-waveshare-800x480-panel-support.patch \
             file://imx93-gis-frdm-dsi.dts \
             "
 
-KERNEL_DEVICETREE += " freescale/imx93-gis-frdm-dsi.dtb "
 
+KERNEL_DEVICETREE:append = " freescale/imx93-gis-frdm-dsi.dtb \
+                            "
 
 KERNEL_CONFIG_FRAGMENTS += "panel-ws-800x480.cfg"
 

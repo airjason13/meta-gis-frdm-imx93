@@ -1,6 +1,0 @@
-define PANEL_WS_800x480
-desc "Enable DRM panel WS 800x480"
-kconf non-hardware
-src panel-ws-800x480.cfg
-endef
-

@@ -179,7 +179,7 @@ static int panel_vws_dsi_probe(struct mipi_dsi_device *dsi)
     if (!desc){
         return -ENODEV;
     }
-    printk("Venom got desc");
+    printk("Venom got desc vvvv!");
     
 #if 0
     err = panel_simple_probe(&dsi->dev, &desc->desc);
