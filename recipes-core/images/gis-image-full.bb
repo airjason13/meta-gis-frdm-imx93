@@ -9,7 +9,6 @@ require recipes-fsl/images/imx-image-multimedia.bb
 CONFLICT_DISTRO_FEATURES = "directfb"
 
 IMAGE_BOOT_FILES:append = " imx93-gis-frdm-dsi.dtb \
-                            imx93-11x11-frdm-dsi-gis.dtb \
                            "
 
 
