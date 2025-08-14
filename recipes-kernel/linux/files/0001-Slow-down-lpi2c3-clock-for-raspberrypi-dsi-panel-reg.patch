@@ -1,0 +1,27 @@
+From eccaf40397de9adc894b5ca75367a1cec9fde136 Mon Sep 17 00:00:00 2001
+From: airjason13 <airjason13@gmail.com>
+Date: Thu, 14 Aug 2025 18:44:42 +0800
+Subject: [PATCH] Slow down lpi2c3 clock for raspberrypi dsi panel regulator
+
+Signed-off-by: airjason13 <airjason13@gmail.com>
+---
+ arch/arm64/boot/dts/freescale/imx93-11x11-frdm.dts | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/imx93-11x11-frdm.dts b/arch/arm64/boot/dts/freescale/imx93-11x11-frdm.dts
+index d219e244d53b..2133c31c697d 100644
+--- a/arch/arm64/boot/dts/freescale/imx93-11x11-frdm.dts
++++ b/arch/arm64/boot/dts/freescale/imx93-11x11-frdm.dts
+@@ -484,7 +484,8 @@ pcal6524: gpio@22 {
+ &lpi2c3 {
+ 	#address-cells = <1>;
+ 	#size-cells = <0>;
+-	clock-frequency = <400000>;
++	//clock-frequency = <400000>;
++	clock-frequency = <40000>;
+ 	pinctrl-names = "default", "sleep";
+ 	pinctrl-0 = <&pinctrl_lpi2c3>;
+ 	pinctrl-1 = <&pinctrl_lpi2c3>;
+-- 
+2.34.1
+
