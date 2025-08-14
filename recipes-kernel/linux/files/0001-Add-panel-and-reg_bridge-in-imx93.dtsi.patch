@@ -1,0 +1,39 @@
+From 76d1b817d434af5d23768b5b64c14c97d4bb5635 Mon Sep 17 00:00:00 2001
+From: airjason13 <airjason13@gmail.com>
+Date: Thu, 14 Aug 2025 17:14:17 +0800
+Subject: [PATCH] Add panel and reg_bridge in imx93.dtsi
+
+Signed-off-by: airjason13 <airjason13@gmail.com>
+---
+ arch/arm64/boot/dts/freescale/imx93.dtsi | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/imx93.dtsi b/arch/arm64/boot/dts/freescale/imx93.dtsi
+index 721a6682ba62..4a59fd275d8d 100644
+--- a/arch/arm64/boot/dts/freescale/imx93.dtsi
++++ b/arch/arm64/boot/dts/freescale/imx93.dtsi
+@@ -1524,11 +1524,20 @@ dsi_to_lcdif: endpoint {
+ 				port@1 {
+ 					reg = <1>;
+ 					endpoint {
+-					};
++                               
++                        		};
+ 				};
+ 			};
+ 		};
+ 
++		dsi_panel: dsi_panel{
++			status = "disabled";	
++		};
++
++		reg_bridge: reg_bridge {
++			status = "disabled";
++		};	
++
+ 		lcdif: lcd-controller@4ae30000 {
+ 			compatible = "fsl,imx93-lcdif";
+ 			reg = <0x4ae30000 0x10000>;
+-- 
+2.34.1
+

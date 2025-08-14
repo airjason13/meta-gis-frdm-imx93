@@ -24,44 +24,63 @@
 &dsi {
 	status = "okay";
 
-	ports {
-		port@1{
-			reg = <1>;
+        ports {
+                port@1 {
+                        reg = <1>;
 
-			dsi_to_panel: endpoint {
-				remote-endpoint = <&panel_to_dsi>;
-			};
-		};
-	};
-    
-    panel@0{
-        compatible = "ws,ws_800x480";
-        reg = <0>;
-	    ports {
-		    port@1{
-                panel_to_dsi: endpoint {
-				    remote-endpoint = <&dsi_to_panel>;
+                        dsi_out: endpoint {
+                                remote-endpoint = <&panel_in>;
+                        };
                 };
-            };
         };
-    };
+	
+	bridge@2 {
+                reg = <2>;
+                compatible = "toshiba,tc358762";
+                status = "okay";
+		vddc-supply = <&reg_bridge>;
+                ports {
+                        port@0 {
+                                reg = <0>;
+                                bridge_in: endpoint {
+                                        remote-endpoint = <&dsi_out>;
+                                };
+                        };
+                        port@1 {
+                                reg = <1>;
+                                bridge_out: endpoint {
+                                        remote-endpoint = <&panel_in>;
+                                };
+                        };
+                };
+
+        };
+
+
+};
+    
+&dsi_panel {
+	compatible = "raspberrypi,7inch-dsi";
+        reg = <0>;
+        status = "okay";
+	backlight = <&reg_display>;
+	power-supply = <&reg_display>;
+        port{
+        	panel_in: endpoint{
+                	remote-endpoint = <&bridge_out>;
+                };
+        };
 };
 
-//ws: panel@0 {
-//    compatible = "ws,ws_800x480";
-//    reg = <0>;
 
-//    ports {
-//        port@0 {
-//            reg = <0>;
-//            endpoint {
-//            /* 用 ASCII 连字符 */
-//            remote-endpoint = <&dsi_to_panel>;
-//            };
-//        };
-//    };
-//};
-
+&reg_bridge {
+	status = "okay";
+	compatible = "regulator-fixed";
+	regulator-name = "bridge_reg";
+	gpio = <&reg_display 0 0>;
+	vin-supply = <&reg_display>;
+	enable-active-high;
+};
 
 
 &lcdif {
@@ -71,3 +90,27 @@
 
 &lpi2c1 {
 };
+
+
+&lpi2c3 {
+	reg_display: reg_display@45 {
+		compatible = "raspberrypi,7inch-touchscreen-panel-regulator";
+		reg = <0x45>;
+		gpio-controller;
+		#gpio-cells = <2>;
+	};
+	
+	ft5x06@38{
+                reg = <0x38>;
+                status = "okay";
+		vcc-supply = <&reg_display>;
+		reset-gpio = <&reg_display 1 1>;
+
+                compatible = "edt,edt-ft5406";
+                touchscreen-size-x = <480>;
+                touchscreen-size-y = <1920>;
+        };
+	
+};
+
+
