@@ -3,7 +3,7 @@
  * Copyright 2024 NXP
  */
 
-#include "imx93-11x11-frdm.dts"
+#include "imx93-gis-frdm.dts"
 
 &lvds_bridge {
 	status = "disabled";
