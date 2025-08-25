@@ -4,6 +4,7 @@ SRC_URI += "file://imx93-gis-frdm-dsi.dts \
 	    file://0001-Add-raspberrypi-7inch-panel-desc-and-mode.patch \           
 	    file://0002-Add-panel-and-reg_bridge-in-imx93.dtsi.patch \
 	    file://imx93-gis-frdm.dts \
+	    file://gis.ppm \
 	    "
 
 
@@ -21,4 +22,16 @@ do_patch:append() {
     
 do_configure:append() {
     cat ../*.cfg >> ${B}/.config
+    cp ../gis.ppm ${S}/drivers/video/logo/logo_mac_clut224.ppm
+    cp ../gis.ppm ${S}/drivers/video/logo/logo_superh_clut224.ppm
+    cp ../gis.ppm ${S}/drivers/video/logo/logo_linux_clut224.ppm
+    cp ../gis.ppm ${S}/drivers/video/logo/logo_sun_clut224.ppm
+    cp ../gis.ppm ${S}/drivers/video/logo/logo_dec_clut224.ppm
+    cp ../gis.ppm ${S}/drivers/video/logo/logo_sgi_clut224.ppm
+    cp ../gis.ppm ${S}/drivers/video/logo/logo_parisc_clut224.ppm
+    cp ../gis.ppm ${S}/drivers/video/logo/logo_superh_vga16.ppm
+    cp ../gis.ppm ${S}/drivers/video/logo/logo_linux_vga16.ppm
+    cp ../gis.ppm ${S}/drivers/video/logo/logo_spe_clut224.ppm
+    cp ../gis.ppm ${S}/drivers/video/logo/clut_vga16.ppm
+
 }
