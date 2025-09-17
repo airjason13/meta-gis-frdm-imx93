@@ -1,0 +1,28 @@
+diff --git a/drivers/gpu/drm/panel/Kconfig b/drivers/gpu/drm/panel/Kconfig
+index 6dc13f2612a3..776115ad84ea 100644
+--- a/drivers/gpu/drm/panel/Kconfig
++++ b/drivers/gpu/drm/panel/Kconfig
+@@ -881,4 +881,23 @@ config DRM_PANEL_WKS_101WX001
+ 	  Say Y here if you want to enable support for the WKS
+ 	  101WX001 controller for 1280x800 LCD panel
+ 
++config DRM_PANEL_JBD_JBD4020_LEFT
++    tristate "JB-Display JBD4020 panel driver"
++    depends on OF
++    depends on DRM_MIPI_DSI
++    select I2C_JBD4020
++    help
++      Say Y here if you want to enable support for the JB-Display
++      JBD4020 controller for 640x480 LCD panels with MIPI
++      system interfaces.
++
++config DRM_PANEL_JBD_JBD4020_RIGHT
++    tristate "JB-Display JBD4020 panel driver"
++    depends on OF
++    depends on DRM_MIPI_DSI
++    select I2C_JBD4020
++    help
++      Say Y here if you want to enable support for the JB-Display
++      JBD4020 controller for 640x480 LCD panels with MIPI
++
+ endmenu
