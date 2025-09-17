@@ -22,95 +22,105 @@
 };
 
 &dsi {
-	status = "okay";
+    status = "okay";
+
+    ports {
+        port@1{
+            reg = <1>;
+
+            dsi_to_panel: endpoint {
+                remote-endpoint = <&panel_to_dsi>;
+            };
+        };
+    };
+
+    panel@0{
+        reg = <0>;
+        //compatible = "ws,ws_800x480";
+        compatible = "jbd,jbd4020-right";
+        vddi-gpio = <&gpio2 2 GPIO_ACTIVE_HIGH>;
+        avdd-gpio = <&gpio2 3 GPIO_ACTIVE_HIGH>;
+        avee-gpio = <&gpio2 4 GPIO_ACTIVE_HIGH>;
+        ddc-i2c-bus = <&lpi2c3>;
+
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_jbdpmic>;
 
         ports {
-                port@1 {
-                        reg = <1>;
-
-                        dsi_out: endpoint {
-                                remote-endpoint = <&panel_in>;
-                        };
+            port@1{
+                panel_to_dsi: endpoint {
+                    remote-endpoint = <&dsi_to_panel>;
                 };
+            };
         };
-	
-	bridge@2 {
-                reg = <2>;
-                compatible = "toshiba,tc358762";
-                status = "okay";
-		vddc-supply = <&reg_bridge>;
-                ports {
-                        port@0 {
-                                reg = <0>;
-                                bridge_in: endpoint {
-                                        remote-endpoint = <&dsi_out>;
-                                };
-                        };
-                        port@1 {
-                                reg = <1>;
-                                bridge_out: endpoint {
-                                        remote-endpoint = <&panel_in>;
-                                };
-                        };
-                };
-
-        };
-
-
+    };
 };
-    
-&dsi_panel {
-	compatible = "raspberrypi,7inch-dsi";
-        reg = <0>;
-        status = "okay";
-	backlight = <&reg_display>;
-	power-supply = <&reg_display>;
-        port{
-        	panel_in: endpoint{
-                	remote-endpoint = <&bridge_out>;
-                };
-        };
-};
-
-
-&reg_bridge {
-	status = "okay";
-	compatible = "regulator-fixed";
-	regulator-name = "bridge_reg";
-	gpio = <&reg_display 0 0>;
-	vin-supply = <&reg_display>;
-	enable-active-high;
-};
-
 
 &lcdif {
 	//assigned-clock-rates = <484000000>, <121000000>, <400000000>, <133333333>;
 	assigned-clock-rates = <400000000>, <50000000>, <400000000>, <133333333>;
 };
 
-&lpi2c1 {
-};
-
-
 &lpi2c3 {
-	reg_display: reg_display@45 {
-		compatible = "raspberrypi,7inch-touchscreen-panel-regulator";
-		reg = <0x45>;
-		gpio-controller;
-		#gpio-cells = <2>;
-	};
-	
-	ft5x06@38{
-                reg = <0x38>;
-                status = "okay";
-		vcc-supply = <&reg_display>;
-		reset-gpio = <&reg_display 1 1>;
+	jbd4020: panel_r@59 {
+		compatible = "gis,jbd4020_i2c";
+		reg = <0x59>;
+		//interrupt-parent = <&pcal6524>;
+		//interrupts = <1 IRQ_TYPE_EDGE_FALLING>;
+		status = "okay";
 
-                compatible = "edt,edt-ft5406";
-                touchscreen-size-x = <480>;
-                touchscreen-size-y = <1920>;
+        regmap {
+            luminance@302ae38 {
+                reg = <0x0302ae38>;
+                bitmask = <0x00001fff>;
+                label = "luminance";
+            };
+            current@302ae90 {
+                reg = <0x0302ae90>;
+                bitmask = <0x000000ff>;
+                label = "current";
+            };
+            temperature@200300c {
+                reg = <0x0200300c>;
+                bitmask = <0x000003ff>;
+                label = "temperature";
+            };
+            flip@3030004 {
+                reg = <0x03030004>;
+                bitmask = <0x00000002>;
+                label = "flip";
+            };
+            mirror@3030004 {
+                reg = <0x03030004>;
+                bitmask = <0x00000001>;
+                label = "mirror";
+            };
+            offset@3030008 {
+                reg = <0x03030008>;
+                bitmask = <0x0001f1f1>;
+                label = "offset";
+            };
         };
-	
+	};
+    panel_g@5a {
+		compatible = "gis,jbd4020_i2c_5a_dummy";
+		reg = <0x5a>;
+		status = "okay";
+    };
+    panel_g@5b {
+		compatible = "gis,jbd4020_i2c_5b_dummy";
+		reg = <0x5b>;
+		status = "okay";
+    };
 };
 
+&iomuxc {
+    pinctrl_jbdpmic: jbdpmicgrp {
+        fsl,pins = <
+            MX93_PAD_GPIO_IO02__GPIO2_IO02 0x40000041
+            MX93_PAD_GPIO_IO03__GPIO2_IO03 0x40000041
+            MX93_PAD_GPIO_IO04__GPIO2_IO04 0x40000041
+        >;
+    };
+};
 
