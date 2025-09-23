@@ -1,0 +1,12 @@
+[submodule "recipes-apps/flaskmediafilemanager/files/pyFlaskMediaFileManager"]
+	path = recipes-apps/flaskmediafilemanager/files/pyFlaskMediaFileManager
+	url = https://github.com/airjason13/pyFlaskMediaFileManager
+[submodule "recipes-apps/lightengineapp/files/pyLightEngineApp"]
+	path = recipes-apps/lightengineapp/files/pyLightEngineApp
+	url = https://github.com/airjason13/pyLightEngineApp
+[submodule "recipes-apps/armessageserver/files/pyMessageServer"]
+	path = recipes-apps/armessageserver/files/pyMessageServer
+	url = https://github.com/airjason13/pyMessageServer
+[submodule "recipes-apps/arglassesdemo/files/pyARGlassesDemo"]
+	path = recipes-apps/arglassesdemo/files/pyARGlassesDemo
+	url = https://github.com/airjason13/pyARGlassesDemo

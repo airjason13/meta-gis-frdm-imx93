@@ -1,0 +1,16 @@
+
+SUMMARY = "Fundamental package for array computing in Python"
+HOMEPAGE = "None"
+AUTHOR = "Travis E. Oliphant et al. <None>"
+LICENSE = "MIT"
+LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=26080bf81b2662c7119d3ef28ae197fd"
+
+SRC_URI = "https://files.pythonhosted.org/packages/d0/19/95b3d357407220ed24c139018d2518fab0a61a948e68286a25f1a4d049ff/numpy-2.3.3.tar.gz"
+SRC_URI[md5sum] = "88bc8bb7efe850c34540df9ed47c6b53"
+SRC_URI[sha256sum] = "ddc7c39727ba62b80dfdbedf400d1c10ddfa8eefbd7ec8dcb118be8b56d31029"
+
+S = "${WORKDIR}/numpy-2.3.3"
+
+RDEPENDS_${PN} = ""
+
+inherit setuptools3

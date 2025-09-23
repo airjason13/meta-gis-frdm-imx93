@@ -5,14 +5,14 @@ PR = "r5"
 inherit packagegroup features_check
 
 
-# ffmpeg/ffplay
-PREFERRED_VERSION:pn-ffmpeg = "6.1.1"
-LICENSE_FLAGS_ACCEPTED="commercial"
-PACKAGECONFIG:append:pn-ffmpeg = " v4l2 "
-PACKAGECONFIG:append:pn-ffmpeg = " fdk-aac jack gpl x264 xcb xv sdl2"
 
 RDEPENDS:${PN} = " \
-    swupdate swupdate-www \
+    lua \
+    swupdate \
+    swupdate-www \
+    swupdate-progress \
+    swupdate-client \
+    swupdate-tools-ipc \
     dtc \
     u-boot-fw-utils \
     htop \
@@ -35,4 +35,12 @@ RDEPENDS:${PN} = " \
     qt5ledscreen \
     vim \
     libubootenvgis \
+    ffmpeg \
+    python3-flask \
+    python3-ffmpy \
+    arglassesdemo \
+    armessageserver \
+    lightengineapp \
+    flaskmediafilemanager \
+    gisdemos \
 "

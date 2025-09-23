@@ -1,0 +1,16 @@
+
+SUMMARY = "Makes it easy to load subpackages and functions on demand."
+HOMEPAGE = "None"
+AUTHOR = "Scientific Python Developers <None>"
+LICENSE = "MIT"
+LIC_FILES_CHKSUM = "file://LICENSE.md;md5=0ed504abd9c0cbada2733980c9c7501f"
+
+SRC_URI = "https://files.pythonhosted.org/packages/6f/6b/c875b30a1ba490860c93da4cabf479e03f584eba06fe5963f6f6644653d8/lazy_loader-0.4.tar.gz"
+SRC_URI[md5sum] = "0ed9a697d30fbe5b7f24106b448d634d"
+SRC_URI[sha256sum] = "47c75182589b91a4e1a85a136c074285a5ad4d9f39c63e0d7fb76391c4574cd1"
+
+S = "${WORKDIR}/lazy_loader-0.4"
+
+RDEPENDS_${PN} = "python3-packaging"
+
+inherit setuptools3
