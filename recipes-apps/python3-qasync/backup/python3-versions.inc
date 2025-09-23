@@ -1,0 +1,1 @@
+PREFERRED_VERSION_python3-qasync = "0.28.0"

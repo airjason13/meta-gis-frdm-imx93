@@ -38,6 +38,7 @@ RDEPENDS:${PN} = " \
     ffmpeg \
     python3-flask \
     python3-ffmpy \
+    python3-qasync \
     arglassesdemo \
     armessageserver \
     lightengineapp \

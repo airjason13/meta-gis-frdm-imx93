@@ -1,0 +1,11 @@
+[Unit]
+Description=python flask media file manager
+
+[Service]
+Type=exec
+ExecStart=/usr/bin/run_pyFlaskMediaFileManager.sh
+KillMode=mixed
+Restart=on-failure
+
+[Install]
+WantedBy=graphical.target

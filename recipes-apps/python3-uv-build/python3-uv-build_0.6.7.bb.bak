@@ -1,0 +1,16 @@
+SUMMARY = "uv build backend (native)"
+HOMEPAGE = "https://github.com/astral-sh/uv"
+LICENSE = "MIT"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=<md5-of-license>"
+
+SRC_URI = "https://files.pythonhosted.org/packages/.../uv_build-${PV}.tar.gz"
+SRC_URI[sha256sum] = "<sha256sum>"
+
+# 這是 native，會被安裝到 recipe-sysroot-native
+inherit pypi setuptools3 native
+
+# 如果 pypi class 不適用，你也可以用 python-distutils or simple install
+S = "${WORKDIR}/uv_build-${PV}"
+
+# noarch python package => 沒有 RDEPENDS
+

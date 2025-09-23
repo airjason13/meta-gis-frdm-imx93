@@ -1,0 +1,1 @@
+PREFERRED_VERSION_python3-uv-build = "0.8.20"

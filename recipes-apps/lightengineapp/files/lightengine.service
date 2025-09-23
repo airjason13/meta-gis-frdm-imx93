@@ -1,0 +1,11 @@
+[Unit]
+Description=python light engine app
+
+[Service]
+Type=exec
+ExecStart=/usr/bin/run_pyLightEngineApp.sh
+KillMode=mixed
+Restart=on-failure
+
+[Install]
+WantedBy=graphical.target
