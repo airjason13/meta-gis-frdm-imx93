@@ -2,5 +2,5 @@
 
 
 cd /root/pyLightEngineApp/
-python3 main.py
+python3 lightengineapp.py
 

@@ -3,5 +3,5 @@
 export DISPLAY=:0
 
 cd /root/pyMessageServer/
-python3 main.py
+python3 armessageserver.py
 

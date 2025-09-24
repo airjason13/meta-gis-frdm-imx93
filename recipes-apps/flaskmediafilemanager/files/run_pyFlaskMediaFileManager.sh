@@ -2,5 +2,5 @@
 
 
 cd /root/pyFlaskMediaFileManager/
-python3 main.py
+python3 flaskmediafilemanager.py
 
