@@ -42,6 +42,7 @@ RDEPENDS:${PN} = " \
     arglassesdemo \
     armessageserver \
     lightengineapp \
+    arsysapp \
     flaskmediafilemanager \
     gisdemos \
 "
