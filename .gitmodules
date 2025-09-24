@@ -10,3 +10,6 @@
 [submodule "recipes-apps/arglassesdemo/files/pyARGlassesDemo"]
 	path = recipes-apps/arglassesdemo/files/pyARGlassesDemo
 	url = https://github.com/airjason13/pyARGlassesDemo
+[submodule "recipes-apps/arsysapp/files/pyARSysApp"]
+	path = recipes-apps/arsysapp/files/pyARSysApp
+	url = https://github.com/airjason13/pyARSysApp
