@@ -20,9 +20,9 @@
 static uint8_t jbd_panel_status[3] = {0};
 
 static struct jbd4020_cfg_t jbd_panel_cfg[8] = {
-    {17, 12, 1, 1, 8191, 60}, // R_panel
-    {12, 12, 1, 0, 5707, 35}, // G_panel
-    {16, 12, 1, 1, 5047, 30}, // B_panel
+    {17, 12, 1, 1, 1775, 250}, // R_panel
+    {12, 12, 1, 0, 1448, 10}, // G_panel
+    {16, 12, 1, 1, 644, 30}, // B_panel
 };
 
 static inline struct jbd4020_panel_info_t *panel_to_jbd4020(struct drm_panel *panel)
@@ -667,8 +667,8 @@ static int jbd4020_panel_lum_set(struct jbd4020_panel_info_t *ctx, panel_id_t pa
 {
 	int ret = 0;
 
-	ret |= jbd4020_i2c_write_reg_data(ctx->ddc, panel_id,  0x0302AE00, 0x00000380); //open Gamma
-	ret |= jbd4020_i2c_write_reg_data(ctx->ddc, panel_id,  0x0302AE04, 0x0104101E); //close DBV Dimming
+	ret |= jbd4020_i2c_write_reg_data(ctx->ddc, panel_id, 0x0302AE00, 0x00000380); //open Gamma
+	ret |= jbd4020_i2c_write_reg_data(ctx->ddc, panel_id, 0x0302AE04, 0x0104101E); //close DBV Dimming
 	ret |= jbd4020_i2c_write_reg_data(ctx->ddc, panel_id, JBD4020_REG_DBV, lum);
 
 	return ret;
