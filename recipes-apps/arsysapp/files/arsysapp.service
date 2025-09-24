@@ -1,0 +1,11 @@
+[Unit]
+Description=python AR Glasses System  app
+
+[Service]
+Type=exec
+ExecStart=/usr/bin/run_pyARSysApp.sh
+KillMode=mixed
+Restart=on-failure
+
+[Install]
+WantedBy=graphical.target
