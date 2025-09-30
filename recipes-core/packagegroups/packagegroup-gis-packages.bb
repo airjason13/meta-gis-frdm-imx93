@@ -36,6 +36,9 @@ RDEPENDS:${PN} = " \
     vim \
     libubootenvgis \
     ffmpeg \
+    git \
+    ninja \
+    android-tools \
     python3-flask \
     python3-ffmpy \
     python3-qasync \
