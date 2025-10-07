@@ -34,6 +34,7 @@ RDEPENDS:${PN} = " \
     qtquick3d \
     qt5ledscreen \
     vim \
+    tree \
     libubootenvgis \
     ffmpeg \
     git \
