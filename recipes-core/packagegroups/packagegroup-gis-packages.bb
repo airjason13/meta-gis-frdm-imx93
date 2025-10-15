@@ -49,4 +49,6 @@ RDEPENDS:${PN} = " \
     arsysapp \
     flaskmediafilemanager \
     gisdemos \
+    ttf-dejavu \
+    fontconfig \
 "
