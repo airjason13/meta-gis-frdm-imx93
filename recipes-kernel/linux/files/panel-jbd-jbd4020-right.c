@@ -728,7 +728,7 @@ static int jbd4020_panel_default_config(struct jbd4020_panel_info_t *ctx)
 	int ret = 0;
 	panel_id_t panel_id;
 
-	jbd4020_panel_read_default_cfg(ctx, jbd_panel_cfg);
+	// jbd4020_panel_read_default_cfg(ctx, jbd_panel_cfg);
 
 	for(panel_id = 0; panel_id < 3; panel_id++) {
 		if(jbd_panel_status[panel_id]) {

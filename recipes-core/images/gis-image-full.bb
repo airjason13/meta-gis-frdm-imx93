@@ -28,6 +28,7 @@ IMAGE_INSTALL += " \
     ${IMAGE_INSTALL_PKCS11TOOL} \
     packagegroup-gis-fonts \
     packagegroup-gis-packages \
+    fonts-noto \
 "
 
 

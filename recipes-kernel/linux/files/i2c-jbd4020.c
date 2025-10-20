@@ -968,7 +968,7 @@ static ssize_t show_offset(struct device *dev, struct my_dev_attr *itemattr, cha
     if (0 == i2c_read_reg32(gClientR, itemattr->addr, &offsetR) &&
         0 == i2c_read_reg32(gClientG, itemattr->addr, &offsetG) &&
         0 == i2c_read_reg32(gClientB, itemattr->addr, &offsetB)) {
-        count = scnprintf(buf, PAGE_SIZE, "R(%s)H: %u, V:%u\nG(%s)H: %u, V:%u\nB(%s)H: %u, V:%u\n",
+        count = scnprintf(buf, PAGE_SIZE, "R(%s) H:%u, V:%u\nG(%s) H:%u, V:%u\nB(%s) H:%u, V:%u\n",
                 offsetR & 0x01 ? "enabled" : "disabled", (offsetR >> 4) & 0x1F, (offsetR >> 12) & 0x1F,
                 offsetG & 0x01 ? "enabled" : "disabled", (offsetG >> 4) & 0x1F, (offsetG >> 12) & 0x1F,
                 offsetB & 0x01 ? "enabled" : "disabled", (offsetB >> 4) & 0x1F, (offsetB >> 12) & 0x1F);
@@ -1192,6 +1192,7 @@ static ssize_t store_flip(struct device *dev, struct my_dev_attr *itemattr,
             i2c_write_reg32(gClientR, REG_FMO_VO, temp);
         }
     }
+    value = en << __builtin_ctz(itemattr->bitmask);
     if (!i2c_read_reg32(gClientG, itemattr->addr, &temp)) {
         temp &= ~itemattr->bitmask;
         temp |= (value & itemattr->bitmask);
@@ -1205,6 +1206,7 @@ static ssize_t store_flip(struct device *dev, struct my_dev_attr *itemattr,
             i2c_write_reg32(gClientG, REG_FMO_VO, temp);
         }
     }
+    value = en << __builtin_ctz(itemattr->bitmask);
     if (!i2c_read_reg32(gClientB, itemattr->addr, &temp)) {
         temp &= ~itemattr->bitmask;
         temp |= (value & itemattr->bitmask);
@@ -1354,8 +1356,8 @@ static ssize_t store_offset(struct device *dev, struct my_dev_attr *itemattr, co
     }
 
     // 
-    if (argc != 4) {
-        dev_warn(dev, "Expected 4 arguments, got %d\n", argc);
+    if (argc != 2 && argc != 4) {
+        dev_warn(dev, "Expected 2 or 4 arguments, got %d\n", argc);
         goto out;
     }
 
@@ -1383,19 +1385,23 @@ static ssize_t store_offset(struct device *dev, struct my_dev_attr *itemattr, co
     }
 
     // 
-    u32 val_h;
-    ret = kstrtouint(argv[2], 0, &val_h);
-    if (ret) {
-        dev_warn(dev, "Invalid value: %s\n", argv[2]);
-        goto out;
+    u32 val_h = 0;
+    if (4 == argc) {
+        ret = kstrtouint(argv[2], 0, &val_h);
+        if (ret) {
+            dev_warn(dev, "Invalid value: %s\n", argv[2]);
+            goto out;
+        }
     }
 
     // 
-    u32 val_v;
-    ret = kstrtouint(argv[3], 0, &val_v);
-    if (ret) {
-        dev_warn(dev, "Invalid value: %s\n", argv[3]);
-        goto out;
+    u32 val_v = 0;
+    if (4 == argc) {
+        ret = kstrtouint(argv[3], 0, &val_v);
+        if (ret) {
+            dev_warn(dev, "Invalid value: %s\n", argv[3]);
+            goto out;
+        }
     }
 
     // 
@@ -1407,7 +1413,7 @@ static ssize_t store_offset(struct device *dev, struct my_dev_attr *itemattr, co
     // TODO: I2C
     u32 value;
     if (!i2c_read_reg32(client, itemattr->addr, &temp)) {
-        if (0 == en) {
+        if (0 == en || 2 == argc) {
             val_v = (temp >> 12) & 0x1F;
             val_h = (temp >>  4) & 0x1F;
         }
