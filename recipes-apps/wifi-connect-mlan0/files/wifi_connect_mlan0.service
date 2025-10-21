@@ -1,0 +1,12 @@
+[Unit]
+Description=mlan0 interface connect to a AP
+After=hostapd_uap0.service
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/wifi_connect_ap.sh
+#Restart=on-failure
+#RestartSec=3
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -49,6 +49,7 @@ RDEPENDS:${PN} = " \
     arsysapp \
     flaskmediafilemanager \
     gisdemos \
+    wget \
     ttf-dejavu-sans \
     ttf-dejavu-sans-mono \
     ttf-dejavu-sans-condensed \
