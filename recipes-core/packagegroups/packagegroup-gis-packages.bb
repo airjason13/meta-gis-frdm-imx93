@@ -49,6 +49,14 @@ RDEPENDS:${PN} = " \
     arsysapp \
     flaskmediafilemanager \
     gisdemos \
+    wifi-connect-mlan0 \
+    alsa-dev \
+    alsa-utils \
+    alsa-tools \
+    alsa-plugins \
+    imx-alsa-plugins \
+    alsa-state \
+    libeigen-dev \
     wget \
     ttf-dejavu-sans \
     ttf-dejavu-sans-mono \

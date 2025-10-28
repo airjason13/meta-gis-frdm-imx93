@@ -4,6 +4,7 @@ FILESEXTRAPATHS:append := "${THISDIR}/files"
 SRC_URI += "file://wifi_connect_mlan0.service \
             file://wifi_connect_ap.sh \
             file://wpa_supplicant_mlan0.conf \
+            file://wpa_supplicant_default.conf \
             "
 
 inherit systemd
@@ -20,6 +21,7 @@ do_install() {
     install -m 777 wifi_connect_ap.sh ${D}/${bindir}/
     install -m 644 wifi_connect_mlan0.service ${D}/${systemd_system_unitdir}/
     install -m 644 wpa_supplicant_mlan0.conf ${D}/${sysconfdir}/
+    install -m 644 wpa_supplicant_default.conf ${D}/${sysconfdir}/
     
 }
 
