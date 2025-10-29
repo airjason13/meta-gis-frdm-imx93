@@ -3,7 +3,7 @@ Description=python AR Glasses Demo app
 After=weston.service
 
 [Service]
-user=rooot
+user=root
 Environment="WAYLAND_DISPLAY=/run/wayland-0"
 Type=exec
 ExecStart=/usr/bin/run_pyARGlassesDemo.sh
