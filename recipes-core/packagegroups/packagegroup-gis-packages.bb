@@ -43,6 +43,7 @@ RDEPENDS:${PN} = " \
     python3-flask \
     python3-ffmpy \
     python3-qasync \
+    python3-pycairo \
     arglassesdemo \
     armessageserver \
     lightengineapp \
