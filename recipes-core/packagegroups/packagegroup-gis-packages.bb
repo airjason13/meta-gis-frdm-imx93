@@ -44,6 +44,7 @@ RDEPENDS:${PN} = " \
     python3-ffmpy \
     python3-qasync \
     python3-pycairo \
+    python3-pyaudio \
     arglassesdemo \
     armessageserver \
     lightengineapp \
@@ -59,6 +60,8 @@ RDEPENDS:${PN} = " \
     alsa-state \
     libeigen-dev \
     wget \
+    lsof \
+    wireshark \
     ttf-dejavu-sans \
     ttf-dejavu-sans-mono \
     ttf-dejavu-sans-condensed \

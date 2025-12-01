@@ -15,6 +15,7 @@ SYSTEMD_AUTO_ENABLE:pn-psplash-default = " disable "
 SYSTEMD_AUTO_ENABLE:pn-psplash-start = " disable "
 SYSTEMD_AUTO_ENABLE:pn-psplash = " disable "
 
+
 IMAGE_INSTALL_REMOVE += " \
      psplash \
 "
