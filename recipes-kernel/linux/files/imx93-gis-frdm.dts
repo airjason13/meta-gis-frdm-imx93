@@ -485,19 +485,18 @@
 &lpi2c3 {
 	#address-cells = <1>;
 	#size-cells = <0>;
-	//clock-frequency = <400000>;
-	clock-frequency = <10000>;
+	clock-frequency = <400000>;
 	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&pinctrl_lpi2c3>;
 	pinctrl-1 = <&pinctrl_lpi2c3>;
 	status = "okay";
 
 	pcf2131: rtc@53 {
-			compatible = "nxp,pcf2131";
-			reg = <0x53>;
-			interrupt-parent = <&pcal6524>;
-			interrupts = <1 IRQ_TYPE_EDGE_FALLING>;
-			status = "okay";
+		compatible = "nxp,pcf2131";
+		reg = <0x53>;
+		interrupt-parent = <&pcal6524>;
+		interrupts = <1 IRQ_TYPE_EDGE_FALLING>;
+		status = "okay";
 	};
 
 	ptn5110: tcpc@50 {
@@ -1000,7 +999,7 @@
 	};
 	pinctrl_led1: ledsgrp1 {
 		fsl,pins = <
-			MX93_PAD_GPIO_IO04__TPM3_CH0  0x02
+			//MX93_PAD_GPIO_IO04__TPM3_CH0  0x02
 			MX93_PAD_GPIO_IO12__TPM3_CH2  0x02
 		>;
 	};
