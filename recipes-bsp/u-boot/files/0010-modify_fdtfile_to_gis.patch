@@ -1,0 +1,11 @@
+--- a/configs/imx93_11x11_frdm_defconfig	2025-09-18 16:03:06.372244498 +0800
++++ b/configs/imx93_11x11_frdm_defconfig	2025-09-18 16:03:23.876365863 +0800
+@@ -31,7 +31,7 @@
+ CONFIG_DISTRO_DEFAULTS=y
+ CONFIG_OF_SYSTEM_SETUP=y
+ CONFIG_BOOTCOMMAND="run sr_ir_v2_cmd;run distro_bootcmd;run bsp_bootcmd"
+-CONFIG_DEFAULT_FDT_FILE="imx93-11x11-frdm.dtb"
++CONFIG_DEFAULT_FDT_FILE="imx93-gis-frdm-dsi.dtb"
+ CONFIG_SYS_CBSIZE=2048
+ CONFIG_SYS_PBSIZE=2074
+ CONFIG_ARCH_MISC_INIT=y

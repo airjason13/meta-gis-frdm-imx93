@@ -1,0 +1,15 @@
+diff --git a/drivers/i2c/busses/Kconfig b/drivers/i2c/busses/Kconfig
+index 6f0eced22f02..479633487800 100644
+--- a/drivers/i2c/busses/Kconfig
++++ b/drivers/i2c/busses/Kconfig
+@@ -1493,4 +1493,10 @@ config I2C_VIRTIO
+           This driver can also be built as a module. If so, the module
+           will be called i2c-virtio.
+ 
++config I2C_JBD4020
++    tristate "JB-Display I2C device driver"
++    help
++      Driver for JBD4020, providing parameters setting functions.
++      Also, temperature monitoring function is built-in.
++
+ endmenu

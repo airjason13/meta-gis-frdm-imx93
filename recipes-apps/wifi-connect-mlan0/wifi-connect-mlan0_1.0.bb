@@ -9,7 +9,8 @@ SRC_URI += "file://wifi_connect_mlan0.service \
 
 inherit systemd
 SYSTEMD_SERVICE:${PN} = "wifi_connect_mlan0.service"
-SYSTEMD_AUTO_ENABLE:${PN} = "enable"
+# SYSTEMD_AUTO_ENABLE:${PN} = "enable"
+SYSTEMD_AUTO_ENABLE:${PN} = "disable"
 
 S = "${WORKDIR}"
 

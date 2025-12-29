@@ -1,0 +1,10 @@
+diff --git a/drivers/gpu/drm/panel/Makefile b/drivers/gpu/drm/panel/Makefile
+index e1bd080a06c6..2862f49aa660 100644
+--- a/drivers/gpu/drm/panel/Makefile
++++ b/drivers/gpu/drm/panel/Makefile
+@@ -89,3 +89,5 @@ obj-$(CONFIG_DRM_PANEL_VISIONOX_R66451) += panel-visionox-r66451.o
+ obj-$(CONFIG_DRM_PANEL_WIDECHIPS_WS2401) += panel-widechips-ws2401.o
+ obj-$(CONFIG_DRM_PANEL_XINPENG_XPP055C272) += panel-xinpeng-xpp055c272.o
+ obj-$(CONFIG_DRM_PANEL_WKS_101WX001) += panel-wks-101wx001.o
++obj-$(CONFIG_DRM_PANEL_JBD_JBD4020_LEFT) += panel-jbd-jbd4020-left.o
++obj-$(CONFIG_DRM_PANEL_JBD_JBD4020_RIGHT) += panel-jbd-jbd4020-right.o
