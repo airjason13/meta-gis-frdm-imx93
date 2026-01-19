@@ -9,6 +9,8 @@ require recipes-fsl/images/imx-image-multimedia.bb
 CONFLICT_DISTRO_FEATURES = "directfb"
 
 IMAGE_BOOT_FILES:append = " imx93-gis-frdm-dsi.dtb \
+                            imx93-gis-sdmb.dtb \
+                            imx93-gis-sdmb-jbd4020.dtb \
                            "
 SYSTEMD_AUTO_ENABLE:pn-psplash-systemd = " disable "
 SYSTEMD_AUTO_ENABLE:pn-psplash-default = " disable "
