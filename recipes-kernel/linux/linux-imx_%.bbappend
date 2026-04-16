@@ -14,15 +14,36 @@ SRC_URI += "file://imx93-gis-frdm-dsi.dts \
             file://0003-panel-makefile-jbd4020.patch \
             file://0004-i2c-kconfig-jbd4020.patch \
             file://0004-i2c-makefile-jbd4020.patch \
+            file://imx93-gis-frdm-jbd4020.dts \
             file://imx93-gis-sdmb-jbd4020.dts \
+            file://imx93-gis-frdm-jbd4040.dts \
+            file://imx93-gis-frdm-jbd4040-145.dts \
+            file://imx93-gis-frdm-jbd4040-145-1.dts \
+            file://imx93-gis-frdm-jbd4040-160.dts \
             file://imx93-gis-sdmb.dts \
+            file://imx93-gis-frdm-test-jbd4040.dts \
+            file://imx93-gis-frdm-jbd4040-90hz.dts \
+            file://imx93-gis-frdm-jbd4040-flags-vga.dts \
+            file://imx93-gis-frdm-jbd4040-full-vga.dts \
+            file://imx93-gis-frdm-jbd4040-vga.dts \
 	    "
 
 
 KERNEL_DEVICETREE:append = " freescale/imx93-gis-frdm-dsi.dtb \
-                             freescale/imx93-gis-frdm.dtb \ 
+                             freescale/imx93-gis-frdm.dtb \
+                             freescale/imx93-gis-frdm-jbd4020.dtb \ 
                              freescale/imx93-gis-sdmb-jbd4020.dtb \ 
-                             freescale/imx93-gis-sdmb.dtb \ 
+                             freescale/imx93-gis-frdm-jbd4040.dtb \ 
+                             freescale/imx93-gis-frdm-jbd4040-160.dtb \ 
+                             freescale/imx93-gis-frdm-jbd4040-145.dtb \ 
+                             freescale/imx93-gis-frdm-jbd4040-145-1.dtb \ 
+                             freescale/imx93-gis-frdm-jbd4040-160.dtb \ 
+                             freescale/imx93-gis-frdm-jbd4040-90hz.dtb \ 
+                             freescale/imx93-gis-frdm-jbd4040-flags-vga.dtb \ 
+                             freescale/imx93-gis-frdm-jbd4040-full-vga.dtb \ 
+                             freescale/imx93-gis-frdm-jbd4040-vga.dtb \ 
+                             freescale/imx93-gis-sdmb.dtb \
+                             freescale/imx93-gis-frdm-test-jbd4040.dtb \ 
                             "
 
 KERNEL_CONFIG_FRAGMENTS += "panel-jbd-jbd4020.cfg"
@@ -34,8 +55,30 @@ do_patch:append() {
         ${S}/arch/arm64/boot/dts/freescale/imx93-gis-frdm.dts
     install -Dm0644 ${WORKDIR}/imx93-gis-sdmb.dts \
         ${S}/arch/arm64/boot/dts/freescale/imx93-gis-sdmb.dts
+    install -Dm0644 ${WORKDIR}/imx93-gis-frdm-jbd4020.dts \
+        ${S}/arch/arm64/boot/dts/freescale/imx93-gis-frdm-jbd4020.dts
     install -Dm0644 ${WORKDIR}/imx93-gis-sdmb-jbd4020.dts \
         ${S}/arch/arm64/boot/dts/freescale/imx93-gis-sdmb-jbd4020.dts
+    install -Dm0644 ${WORKDIR}/imx93-gis-frdm-jbd4040.dts \
+        ${S}/arch/arm64/boot/dts/freescale/imx93-gis-frdm-jbd4040.dts
+    install -Dm0644 ${WORKDIR}/imx93-gis-frdm-jbd4040-160.dts \
+        ${S}/arch/arm64/boot/dts/freescale/imx93-gis-frdm-jbd4040-160.dts
+    install -Dm0644 ${WORKDIR}/imx93-gis-frdm-jbd4040-145.dts \
+        ${S}/arch/arm64/boot/dts/freescale/imx93-gis-frdm-jbd4040-145.dts
+    install -Dm0644 ${WORKDIR}/imx93-gis-frdm-jbd4040-145-1.dts \
+        ${S}/arch/arm64/boot/dts/freescale/imx93-gis-frdm-jbd4040-145-1.dts
+    install -Dm0644 ${WORKDIR}/imx93-gis-frdm-jbd4040-160.dts \
+        ${S}/arch/arm64/boot/dts/freescale/imx93-gis-frdm-jbd4040-160.dts
+    install -Dm0644 ${WORKDIR}/imx93-gis-frdm-jbd4040-90hz.dts \
+        ${S}/arch/arm64/boot/dts/freescale/imx93-gis-frdm-jbd4040-90hz.dts
+    install -Dm0644 ${WORKDIR}/imx93-gis-frdm-jbd4040-vga.dts \
+        ${S}/arch/arm64/boot/dts/freescale/imx93-gis-frdm-jbd4040-vga.dts
+    install -Dm0644 ${WORKDIR}/imx93-gis-frdm-jbd4040-flags-vga.dts \
+        ${S}/arch/arm64/boot/dts/freescale/imx93-gis-frdm-jbd4040-flags-vga.dts
+    install -Dm0644 ${WORKDIR}/imx93-gis-frdm-jbd4040-full-vga.dts \
+        ${S}/arch/arm64/boot/dts/freescale/imx93-gis-frdm-jbd4040-full-vga.dts
+    install -Dm0644 ${WORKDIR}/imx93-gis-frdm-test-jbd4040.dts \
+        ${S}/arch/arm64/boot/dts/freescale/imx93-gis-frdm-test-jbd4040.dts
     install -m 0644 ${WORKDIR}/panel-jbd-jbd4020-left.c ${S}/drivers/gpu/drm/panel/panel-jbd-jbd4020-left.c
     install -m 0644 ${WORKDIR}/panel-jbd-jbd4020-right.c ${S}/drivers/gpu/drm/panel/panel-jbd-jbd4020-right.c
     install -m 0644 ${WORKDIR}/panel-jbd-jbd4020.h ${S}/drivers/gpu/drm/panel/panel-jbd-jbd4020.h

@@ -45,6 +45,7 @@ RDEPENDS:${PN} = " \
     python3-qasync \
     python3-pycairo \
     python3-pyaudio \
+    python3-smbus2 \
     arglassesdemo \
     armessageserver \
     lightengineapp \

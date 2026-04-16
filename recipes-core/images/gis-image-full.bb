@@ -9,8 +9,18 @@ require recipes-fsl/images/imx-image-multimedia.bb
 CONFLICT_DISTRO_FEATURES = "directfb"
 
 IMAGE_BOOT_FILES:append = " imx93-gis-frdm-dsi.dtb \
+                            imx93-gis-frdm-jbd4020.dtb \
                             imx93-gis-sdmb.dtb \
                             imx93-gis-sdmb-jbd4020.dtb \
+                            imx93-gis-frdm-jbd4040.dtb \
+                            imx93-gis-frdm-jbd4040-160.dtb \
+                            imx93-gis-frdm-jbd4040-145.dtb \
+                            imx93-gis-frdm-jbd4040-145-1.dtb \
+                            imx93-gis-frdm-jbd4040-160.dtb \
+                            imx93-gis-frdm-jbd4040-flags-vga.dtb \
+                            imx93-gis-frdm-jbd4040-90hz.dtb \
+                            imx93-gis-frdm-jbd4040-full-vga.dtb \
+                            imx93-gis-frdm-jbd4040-vga.dtb \
                            "
 SYSTEMD_AUTO_ENABLE:pn-psplash-systemd = " disable "
 SYSTEMD_AUTO_ENABLE:pn-psplash-default = " disable "
