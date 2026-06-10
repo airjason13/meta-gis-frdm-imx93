@@ -57,3 +57,84 @@
         status = "okay";
 };
 
+
+
+&lpi2c1 {
+        jbd4040: panel_r@58 {
+                compatible = "gis,jbd4040_i2c";
+                reg = <0x58>;
+                status = "okay";
+
+                pinctrl-names = "default";
+                pinctrl-0 = <&pinctrl_jbdpmic>;
+
+                /* 2. 定義各個控制引腳 (對應 GPIO2 的各個管腳) */
+                dvdd-gpios  = <&gpio2 6  GPIO_ACTIVE_HIGH>;
+                vddi-gpios  = <&gpio2 19 GPIO_ACTIVE_HIGH>;
+                avdd-gpios  = <&gpio2 13 GPIO_ACTIVE_HIGH>;
+                avee-gpios  = <&gpio2 26 GPIO_ACTIVE_HIGH>;
+                reset-gpios = <&gpio2 21 GPIO_ACTIVE_LOW>;
+                 
+        	regmap {
+            		luminance@200a14 {
+                		reg = <0x200a14>;
+                		bitmask = <0x00001fff>;
+                		label = "luminance";
+            		};
+            		current@200100 {
+                		reg = <0x200100>;
+                		bitmask = <0x000000ff>;
+                		label = "current";
+            		};
+            		temperature@200404 {
+                		reg = <0x200404>;
+                		bitmask = <0x000003ff>;
+                		label = "temperature";
+            		};
+            		flip@20020e {
+                		reg = <0x20020e>;
+                		bitmask = <0x00000002>;
+               			label = "flip";
+            		};
+            		mirror@20020e {
+                		reg = <0x20020e>;
+                		bitmask = <0x00000001>;
+                		label = "mirror";
+            		};
+            		offset@200a24 {
+                		reg = <0x200a24>;
+                		bitmask = <0x00001f1f>;
+                		label = "offset";
+            		};
+        	};
+        };
+    	panel_g@59 {
+        	        compatible = "gis,jbd4040_i2c_59_dummy";
+                	reg = <0x59>;
+                	status = "okay";
+    	};
+    	panel_g@5a {
+        	        compatible = "gis,jbd4040_i2c_5a_dummy";
+                	reg = <0x5a>;
+                	status = "okay";
+    	};
+    	panel_g@5b {
+                	compatible = "gis,jbd4040_i2c_5b_dummy";
+                	reg = <0x5b>;
+                	status = "okay";
+    	};
+};
+
+&iomuxc {
+    pinctrl_jbdpmic: jbdpmicgrp {
+        fsl,pins = <
+            MX93_PAD_GPIO_IO06__GPIO2_IO06 	0x40000041
+            MX93_PAD_GPIO_IO13__GPIO2_IO13 	0x40000041
+            MX93_PAD_GPIO_IO19__GPIO2_IO19 	0x40000041
+            MX93_PAD_GPIO_IO21__GPIO2_IO21 	0x40000041
+            MX93_PAD_GPIO_IO26__GPIO2_IO26 	0x40000041
+        >;
+    };
+};
+
+

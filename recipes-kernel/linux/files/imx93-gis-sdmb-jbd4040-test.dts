@@ -58,7 +58,7 @@
 };
 
 
-
+/*
 //&lpi2c1 {
 &lpi2c3 {
         jbd4040: panel_r@58 {
@@ -66,17 +66,16 @@
                 reg = <0x58>;
                 status = "okay";
 
-                pinctrl-names = "default";
-                pinctrl-0 = <&pinctrl_jbdpmic>;
+                //pinctrl-names = "default";
+                //pinctrl-0 = <&pinctrl_jbdpmic>;
 
-                /* 2. 定義各個控制引腳 (對應 GPIO2 的各個管腳) */
                 //dvdd-gpios  = <&gpio2 6  GPIO_ACTIVE_HIGH>;
                 //vddi-gpios  = <&gpio2 19 GPIO_ACTIVE_HIGH>;
-                avdd-gpios  = <&gpio2 3 GPIO_ACTIVE_HIGH>;
-                avee-gpios  = <&gpio2 4 GPIO_ACTIVE_HIGH>;
-                reset-gpios = <&gpio2 24 GPIO_ACTIVE_LOW>;
+                //avdd-gpios  = <&gpio2 3 GPIO_ACTIVE_HIGH>;
+                //avee-gpios  = <&gpio2 4 GPIO_ACTIVE_HIGH>;
+                //reset-gpios = <&gpio2 24 GPIO_ACTIVE_LOW>;
                  
-        	regmap {
+        	/regmap {
             		luminance@200a14 {
                 		reg = <0x200a14>;
                 		bitmask = <0x00001fff>;
@@ -135,5 +134,5 @@
         >;
     };
 };
-
+*/
 

@@ -1,0 +1,68 @@
+From 628243abbbc4c99f4756a58243f17c88d56bbe8a Mon Sep 17 00:00:00 2001
+From: airjason13 <airjason13@gmail.com>
+Date: Tue, 19 May 2026 09:27:59 +0800
+Subject: [PATCH] add jbd4040 desc in panel-simple.c
+
+---
+ drivers/gpu/drm/panel/panel-simple.c | 38 ++++++++++++++++++++++++++++
+ 1 file changed, 38 insertions(+)
+
+diff --git a/drivers/gpu/drm/panel/panel-simple.c b/drivers/gpu/drm/panel/panel-simple.c
+index dc43aa288319..f642ee2f4884 100644
+--- a/drivers/gpu/drm/panel/panel-simple.c
++++ b/drivers/gpu/drm/panel/panel-simple.c
+@@ -4899,6 +4899,41 @@ static const struct panel_desc_dsi osd101t2045_53ts = {
+ 	.lanes = 4,
+ };
+ 
++static const struct drm_display_mode jbd4040_160_mode = {
++        .hdisplay = 380,
++        .hsync_start = 380 + 20,
++        .hsync_end = 380 + 20 + 4,
++        .htotal = 380 + 20 + 4 + 20,
++
++        .vdisplay = 500,
++        .vsync_start = 500 + 20,
++        .vsync_end = 500 + 20 + 2,
++        .vtotal = 500 + 20 + 2 + 2,
++
++        // clock = htotoal * vtotal * fps /1000
++        .clock = 16000,
++};
++
++static const struct panel_desc_dsi jbd4040 = {
++        .desc = {
++                .modes = &jbd4040_160_mode,
++                .num_modes = 1,
++                .bpc = 8,
++                .size = {
++                        .width = 10,
++                        .height = 13,
++                },
++                .connector_type = DRM_MODE_CONNECTOR_DSI,
++        },
++        .flags = MIPI_DSI_MODE_VIDEO |
++                 MIPI_DSI_MODE_VIDEO_SYNC_PULSE,  /* 取代原本的 SYNC_PULSE */
++
++        .format = MIPI_DSI_FMT_RGB888,
++        .lanes = 1,
++};
++
++
++
+ static const struct of_device_id dsi_of_match[] = {
+ 	{
+ 		.compatible = "auo,b080uan01",
+@@ -4921,6 +4956,9 @@ static const struct of_device_id dsi_of_match[] = {
+ 	}, {
+ 		.compatible = "osddisplays,osd101t2045-53ts",
+ 		.data = &osd101t2045_53ts
++	}, {
++		.compatible = "gis,jbd4040_160",
++		.data = &jbd4040
+ 	}, {
+ 		/* sentinel */
+ 	}
+-- 
+2.34.1
+

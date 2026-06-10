@@ -1,0 +1,24 @@
+From 0853ed1d2b1a6633a32c215849ec2f5e0d433af6 Mon Sep 17 00:00:00 2001
+From: airjason13 <airjason13@gmail.com>
+Date: Mon, 18 May 2026 18:39:03 +0800
+Subject: [PATCH] add jbd4040 default m
+
+---
+ drivers/i2c/busses/Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/i2c/busses/Kconfig b/drivers/i2c/busses/Kconfig
+index 14faffab110c..b475d7ad9534 100644
+--- a/drivers/i2c/busses/Kconfig
++++ b/drivers/i2c/busses/Kconfig
+@@ -1502,6 +1502,7 @@ config I2C_JBD4020
+ 
+ config I2C_JBD4040
+     tristate "JB-Display I2C device driver"
++    default m
+     help
+       Driver for JBD4040, providing parameters setting functions.
+       Also, temperature monitoring function is built-in.
+-- 
+2.34.1
+

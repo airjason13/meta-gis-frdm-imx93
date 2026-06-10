@@ -1,0 +1,28 @@
+From 458be48c0cd412cfe6a4de925d8a7f7c920f2c66 Mon Sep 17 00:00:00 2001
+From: airjason13 <airjason13@gmail.com>
+Date: Mon, 18 May 2026 17:50:02 +0800
+Subject: [PATCH] add jbd4020 i2c kconfig
+
+---
+ drivers/i2c/busses/Kconfig | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/drivers/i2c/busses/Kconfig b/drivers/i2c/busses/Kconfig
+index 479633487800..14faffab110c 100644
+--- a/drivers/i2c/busses/Kconfig
++++ b/drivers/i2c/busses/Kconfig
+@@ -1499,4 +1499,11 @@ config I2C_JBD4020
+       Driver for JBD4020, providing parameters setting functions.
+       Also, temperature monitoring function is built-in.
+ 
++
++config I2C_JBD4040
++    tristate "JB-Display I2C device driver"
++    help
++      Driver for JBD4040, providing parameters setting functions.
++      Also, temperature monitoring function is built-in.
++
+ endmenu
+-- 
+2.34.1
+

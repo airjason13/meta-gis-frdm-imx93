@@ -1,5 +1,5 @@
 SUMMARY = "All fonts packages "
-PR = "r5"
+PR = "r6"
 
 
 inherit packagegroup features_check
@@ -70,4 +70,20 @@ RDEPENDS:${PN} = " \
     ttf-dejavu-serif-condensed \
     ttf-dejavu-mathtexgyre \
     fontconfig-utils \
+    bluez5 \
+    bluez-tools \
+    python3-dbus \
+    python3-pygobject \
+    python3-netclient \
+    python3-netserver \
+    python3-io \
+    python3-datetime \
+    python3-logging \
+    python3-asyncio \
+    pipewire \
+    wireplumber \
+    pipewire-media-session \
+    alsa-utils \
 "
+
+PACKAGE_ARCH = "${TUNE_PKGARCH}"
