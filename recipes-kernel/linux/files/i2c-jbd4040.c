@@ -1443,6 +1443,16 @@ static ssize_t store_current(struct device *dev, struct my_dev_attr *itemattr, c
             client = gClientG;
         } else if (!strcasecmp(color_str, "b")) {
             client = gClientB;
+        } else if (!strcasecmp(color_str, "t")) {
+            client = to_i2c_client(dev);
+	    pr_info("jbd4040 tx timing : %x\n", val);
+	    ret = i2c_write_reg32(client, 0x201038, val);
+	    if (ret < 0) {
+	    	dev_err(dev, "jbd4040 tx timing write error!\n");
+	    } else {
+	    	dev_err(dev, "jbd4040 tx timing write ok!\n");
+	    }
+	    goto out;
         } else {
             dev_warn(dev, "Unknown panel tag: %s\n", color_str);
             continue;
@@ -2170,13 +2180,22 @@ static int jbd4040_init_registers(struct i2c_client *client)
     i2c_write_reg32(client, 0x20102c, 0x00000004);
     i2c_write_reg32(client, 0x202000, 0x0000007d);
     i2c_write_reg32(client, 0x2021e0, 0x00000008);
-    i2c_write_reg32(client, 0x201038, 0x000004a0);
+
+    pr_info("Venom jdb4040: tx delay timing to 0x4a2"); //tx delay timing 680 for old type
+    //i2c_write_reg32(client, 0x201038, 0x000004a0); //tx delay time
+    //i2c_write_reg32(client, 0x201038, 0x000008a0);//only green
+    //i2c_write_reg32(client, 0x201038, 0x000006a0);//no red
+    //i2c_write_reg32(client, 0x201038, 0x000005a0);//got red, but offset
+    //i2c_write_reg32(client, 0x201038, 0x00000620);//got red, but offset
+    //i2c_write_reg32(client, 0x201038, 0x00000080);//got red, but offset
+    i2c_write_reg32(client, 0x201038, 0x000004a2);//got red, but offset
     i2c_write_reg32(client, 0x202128, 0x0000000f);
     i2c_write_reg32(client, 0x2021f4, 0x00000027);
 
     /* --- Panel Initialization --- */
     i2c_write_reg16(client, 0x200100, 0x0022);
-    i2c_write_reg16(client, 0x200a00, 0x000C);
+    //i2c_write_reg16(client, 0x200a00, 0x000C);
+    i2c_write_reg16(client, 0x200a00, 0x0008); //60HZ, 10bit scan 
     i2c_write_reg16(client, 0x200a02, 0x0001);
     i2c_write_reg16(client, 0x200a04, 0x0002);
     i2c_write_reg16(client, 0x200a14, 0x1388);

@@ -1,8 +1,8 @@
 [Unit]
 Description=JBD4040 Display I2C Driver Reset Sequence
 # 確保這個腳本在系統掛載完成且多用戶模式啟動後才執行
-After=graphical.target
-
+After=multi-user.target
+Before=weston.service
 [Service]
 # Type=oneshot 代表這是一個執行完就退出的腳本
 Type=oneshot
@@ -11,4 +11,4 @@ ExecStart=/usr/bin/jbd4040-reinit.sh
 RemainAfterExit=yes
 
 [Install]
-WantedBy=graphical.target
+WantedBy=multi-user.target

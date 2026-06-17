@@ -84,6 +84,7 @@ RDEPENDS:${PN} = " \
     wireplumber \
     pipewire-media-session \
     alsa-utils \
+    jbd4040-reinit \
 "
 
 PACKAGE_ARCH = "${TUNE_PKGARCH}"

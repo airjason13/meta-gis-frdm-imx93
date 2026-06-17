@@ -1,5 +1,7 @@
 [Unit]
 Description=python light engine app
+After=jbd4040-reinit.service
+Requires=jbd4040-reinit.service
 
 [Service]
 Type=exec
