@@ -40,21 +40,23 @@ static int i2c_write_reg16(struct i2c_client *client, uint32_t reg, uint16_t val
 #define DEVICE_NAME "jbd4040"
 #define CLASS_NAME "gis"
 
-#define IOCTL_READ_REG32    _IOR('M', 0x01, struct i2c_ioctl_data)
-#define IOCTL_WRITE_REG32   _IOW('M', 0x02, struct i2c_ioctl_data)
+#define IOCTL_READ_REG32    _IOR('J', 0xF1, struct i2c_ioctl_data)
+#define IOCTL_READ_REG16    _IOR('J', 0xF2, struct i2c_ioctl_data)
+#define IOCTL_WRITE_REG32   _IOW('J', 0xF3, struct i2c_ioctl_data)
+#define IOCTL_WRITE_REG16   _IOW('J', 0xF4, struct i2c_ioctl_data)
 
-#define IOCTL_LUMIN_GET     _IOR('R', 0x01, struct jbd4040_luminance)
-#define IOCTL_CURRENT_GET   _IOR('R', 0x02, struct jbd4040_current)
-#define IOCTL_TEMP_READ     _IOR('R', 0x03, struct jbd4040_temp)
-#define IOCTL_FLIP_GET      _IOR('R', 0x04, struct jbd4040_flip)
-#define IOCTL_MIRROR_GET    _IOR('R', 0x05, struct jbd4040_mirror)
-#define IOCTL_OFFSET_GET    _IOR('R', 0x06, struct jbd4040_offset)
+#define IOCTL_LUMIN_GET     _IOR('J', 0x01, struct jbd4040_luminance)
+#define IOCTL_CURRENT_GET   _IOR('J', 0x02, struct jbd4040_current)
+#define IOCTL_TEMP_READ     _IOR('J', 0x03, struct jbd4040_temp)
+#define IOCTL_FLIP_GET      _IOR('J', 0x04, struct jbd4040_flip)
+#define IOCTL_MIRROR_GET    _IOR('J', 0x05, struct jbd4040_mirror)
+#define IOCTL_OFFSET_GET    _IOR('J', 0x06, struct jbd4040_offset)
 
-#define IOCTL_LUMIN_SET     _IOW('W', 0x01, struct jbd4040_luminance)
-#define IOCTL_CURRENT_SET   _IOW('W', 0x02, struct jbd4040_current)
-#define IOCTL_FLIP_SET      _IOW('W', 0x04, struct jbd4040_flip)
-#define IOCTL_MIRROR_SET    _IOW('W', 0x05, struct jbd4040_mirror)
-#define IOCTL_OFFSET_SET    _IOW('W', 0x06, struct jbd4040_offset)
+#define IOCTL_LUMIN_SET     _IOW('J', 0x01, struct jbd4040_luminance)
+#define IOCTL_CURRENT_SET   _IOW('J', 0x02, struct jbd4040_current)
+#define IOCTL_FLIP_SET      _IOW('J', 0x04, struct jbd4040_flip)
+#define IOCTL_MIRROR_SET    _IOW('J', 0x05, struct jbd4040_mirror)
+#define IOCTL_OFFSET_SET    _IOW('J', 0x06, struct jbd4040_offset)
 
 
 /* 面板群組 I2C 位址定義 */
@@ -66,6 +68,22 @@ static int i2c_write_reg16(struct i2c_client *client, uint32_t reg, uint16_t val
 /* 晶片 ID 暫存器位址 (24-bit) */
 #define REG_CHIP_ID0            0x200000
 #define REG_CHIP_ID1            0x200002
+
+#define REG_CORE_VERSION	0x201000
+
+#define REG_EFUSE_ID0		0x200d10
+#define REG_EFUSE_ID1		0x200d12
+#define REG_EFUSE_ID2		0x200d14
+#define REG_EFUSE_ID3		0x200d16
+#define REG_EFUSE_ID4		0x200d18
+#define REG_EFUSE_ID5		0x200d1A
+#define REG_EFUSE_ID6		0x200d1C
+#define REG_EFUSE_ID7		0x200d1E
+
+
+/* 面板更新率查表陣列 (對應 pl_refresh_freq Bit [2:0]: 000 ~ 110) */
+static const uint16_t fps_array[] = {60, 90, 120, 180, 240, 360, 420};
+
 
 #define JBD4040_GAMMA_TABLE_0_ADDR 0x250000
 #define JBD4040_GAMMA_EN_REG       0x200200
@@ -147,33 +165,6 @@ static int read_panel_temp(struct i2c_client *client, int *temp_x100)
 }
 
 
-// old jbd4020 start
-#if 0
-#define REG_BRIGHTNESS      0x0302ae38
-#define REG_CURRENT         0x0302ae90
-#define REG_TEMPERATURE     0x0200300c
-#define REG_FLIP_SRAM       0x03030004
-#define REG_MIRROR_SRAM     0x03030004
-#define REG_OFFSET_SRAM     0x03030008
-#define REG_FMO_VO          0x0300015c
-
-#define MASK_BRIGHTNESS     0x00001fff
-#define MASK_CURRENT        0x000000ff
-#define MASK_TEMPERATURE    0x000003ff
-#define MASK_MIRROR_SRAM    0x00000001
-#define MASK_FLIP_SRAM      0x00000002
-#define MASK_OFFSET_SRAM    0x00000001
-#define MASK_OFFSET_H_SRAM  0x000001f0
-#define MASK_OFFSET_V_SRAM  0x0001f000
-#define MASK_OFFSET_HV_SRAM (MASK_OFFSET_V_SRAM | MASK_OFFSET_H_SRAM)
-#define MASK_FLIP_VO        0x80000000
-#define MASK_MIRROR_VO      0x40000000
-#define MASK_OFFSET_VO      0x20000000
-#define MASK_OFFSET_H_VO    0x00000fff
-#define MASK_OFFSET_V_VO    0x0fff0000
-#define MASK_OFFSET_HV_VO   (MASK_OFFSET_V_VO | MASK_OFFSET_H_VO)
-#endif
-// old jbd4020 end
 
 // Structure for IOCTL data transfer
 struct i2c_ioctl_data {
@@ -312,7 +303,6 @@ static int i2c_read_reg16(struct i2c_client *client, uint32_t reg, uint16_t *val
 
     /* 4. 組合 16-bit 數值 (Little-Endian) */
     *val = (data_buf[1] << 8) | data_buf[0];
-    printk("val : 0x%x\n", val);
     return 0;
 }
 
@@ -438,6 +428,48 @@ static long jbd4040_ioctl(struct file *file, unsigned int cmd, unsigned long arg
                 }
             }
             break;
+
+	case IOCTL_READ_REG16:
+	    {
+                struct i2c_ioctl_data data;
+                uint16_t val16 = 0;
+
+                if (copy_from_user(&data, (void __user *)arg, sizeof(data))) {
+                    ret = -EFAULT;
+                    goto jbd4040_ioctl_exit;
+                }
+
+                if (i2c_read_reg16(gClientR, data.reg, &val16)) {
+                    ret = -EIO;
+                    goto jbd4040_ioctl_exit;
+                }
+
+                // 16-bit 裝進 32-bit 容器，高位元自動補零，安全脫殼
+                data.val = val16;
+
+                if (copy_to_user((void __user *)arg, &data, sizeof(data))) {
+                    ret = -EFAULT;
+                    goto jbd4040_ioctl_exit;
+                }
+            }
+	    break;
+	
+	case IOCTL_WRITE_REG16:
+	    {
+                struct i2c_ioctl_data data;
+
+                if (copy_from_user(&data, (void __user *)arg, sizeof(data))) {
+                    ret = -EFAULT;
+                    goto jbd4040_ioctl_exit;
+                }
+
+                // 強制轉型 (uint16_t)，把 User 傳入的 32-bit 截斷成低 16-bit 送出
+                if (i2c_write_reg16(gClientR, data.reg, (uint16_t)data.val)) {
+                    ret = -EIO;
+                    goto jbd4040_ioctl_exit;
+                }
+            }
+	    break;
 
         case IOCTL_LUMIN_GET:
             {
@@ -1165,25 +1197,29 @@ static ssize_t show_temperature(struct device *dev, struct my_dev_attr *itemattr
     int retR = -1, retG = -1, retB = -1;
     ssize_t count = 0;
     int int_part, frac_part;
-
+    u16 temp_ctrlR = 0, temp_ctrlG = 0, temp_ctrlB = 0;
+    //dev_info(dev, "A %s \n", __func__);
+    //dev_info(dev, "temperature runtime enable!\n");
+    
     /* 1. 平行下達量測指令：同時向三個面板寫入 0x0003 */
     if (gClientR) i2c_write_reg16(gClientR, 0x200402, 0x0003);
     if (gClientG) i2c_write_reg16(gClientG, 0x200402, 0x0003);
     if (gClientB) i2c_write_reg16(gClientB, 0x200402, 0x0003);
-
     /* 2. 只需要睡 1 次 1 秒，等待所有面板 ADC 轉換完成 */
-    msleep(1000);
-
+    //msleep(1000); 
+    msleep(10); 
+    
     /* 3. 讀取並計算各面板的溫度 */
     if (gClientR) retR = read_panel_temp(gClientR, &tempR);
     if (gClientG) retG = read_panel_temp(gClientG, &tempG);
     if (gClientB) retB = read_panel_temp(gClientB, &tempB);
 
-    /* 4. 關閉溫度量測功能以節省功耗 (寫入 0x0000) */
+    //dev_info(dev, "temperature runtime disable!\n");
+    /* 4.關閉溫度量測功能以節省功耗 (寫入 0x0000) */
     if (gClientR) i2c_write_reg16(gClientR, 0x200402, 0x0000);
     if (gClientG) i2c_write_reg16(gClientG, 0x200402, 0x0000);
     if (gClientB) i2c_write_reg16(gClientB, 0x200402, 0x0000);
-
+    
     /* 5. 格式化輸出，完美模擬 Python 的 %.2f，同時處理負數的小數點顯示 */
 
     /* 處理 Red */
@@ -1212,24 +1248,10 @@ static ssize_t show_temperature(struct device *dev, struct my_dev_attr *itemattr
         if (tempB < 0 && int_part == 0) count += scnprintf(buf + count, PAGE_SIZE - count, "-0.%02d\n", frac_part);
         else count += scnprintf(buf + count, PAGE_SIZE - count, "%d.%02d\n", int_part, frac_part);
     } else count += scnprintf(buf + count, PAGE_SIZE - count, "Error\n");
+    //dev_info(dev, "%s tempR:0x%08x, tempG:0x%08x, tempB:0x%08x\n", __func__, tempR, tempG, tempB);
 
     return count;
 
-#if 0 //old jbd4020    
-    if (0 == i2c_read_reg32(gClientR, itemattr->addr, &tempR) &&
-        0 == i2c_read_reg32(gClientG, itemattr->addr, &tempG) &&
-        0 == i2c_read_reg32(gClientB, itemattr->addr, &tempB)) {
-        tempR &= itemattr->bitmask;
-        tempG &= itemattr->bitmask;
-        tempB &= itemattr->bitmask;
-        tempR = ((tempR - 118) * 165) / 815 - 40;
-        tempG = ((tempG - 118) * 165) / 815 - 40;
-        tempB = ((tempB - 118) * 165) / 815 - 40;
-        count = scnprintf(buf, PAGE_SIZE, "R: %u\nG: %u\nB: %u\n", tempR, tempG, tempB);
-    }
-
-    return count;
-#endif
 }
 
 
@@ -1297,6 +1319,40 @@ static ssize_t show_offset(struct device *dev, struct my_dev_attr *itemattr, cha
     dev_info(dev, "offsetG:  0x%08x\n", offsetG);
     dev_info(dev, "offsetB:  0x%08x\n", offsetB);
     return count;
+}
+
+static ssize_t show_fps(struct device *dev, struct my_dev_attr *itemattr, char *buf)
+{
+    uint16_t reg_val = 0;
+    uint8_t freq_idx;
+    uint16_t fps = 0;
+    int ret;
+
+    /* 優先使用 DTS sysfs node 傳入的暫存器位址，若無則 fallback 預設使用 0x200a00 */
+    u32 reg_addr = itemattr->addr ? itemattr->addr : 0x200a00;
+
+    /* 1. 從主面板 (以 Red 面板為代表) 讀取 16-bit 暫存器 */
+    ret = i2c_read_reg16(gClientR, reg_addr, &reg_val);
+    if (ret < 0) {
+        dev_err(dev, "Failed to read fps register 0x%06x\n", reg_addr);
+        return scnprintf(buf, PAGE_SIZE, "Error\n");
+    }
+
+    /* 2. 提取 Bit [2:0]: pl_refresh_freq */
+    freq_idx = reg_val & 0x0007;
+
+    /* 3. 查表解析 FPS，並進行安全邊界檢查 */
+    if (freq_idx < ARRAY_SIZE(fps_array)) {
+        fps = fps_array[freq_idx];
+        dev_dbg(dev, "%s: reg=0x%04x, idx=%u -> fps=%u\n", __func__, reg_val, freq_idx, fps);
+        
+        /* 回傳純數字格式 (例如 "120\n")，方便上層 User space 腳本或 HAL 庫直接轉型解析 */
+        return scnprintf(buf, PAGE_SIZE, "%u\n", fps);
+    } else {
+        /* 避免暫存器出現 3'b111 (7) 未定義狀態時導致越界 */
+        dev_warn(dev, "%s: undefined refresh freq index %u (reg: 0x%04x)\n", __func__, freq_idx, reg_val);
+        return scnprintf(buf, PAGE_SIZE, "Unknown(%u)\n", freq_idx);
+    }
 }
 
 // Functions for handling "echo"
@@ -1547,114 +1603,6 @@ static ssize_t store_flip(struct device *dev, struct my_dev_attr *itemattr, cons
 }
 
 
-static ssize_t store_flip_dep(struct device *dev, struct my_dev_attr *itemattr,
-                            const char *buf, size_t count)
-{
-    char *input, *token;
-    char *argv[DEF_I2C_JBD4040_MAX_ARGS];
-    int argc = 0;
-    int ret;
-    uint32_t temp;
-
-
-#if 1
-    return count;
-#else
-    // 
-    input = kstrndup(buf, count, GFP_KERNEL);
-    if (!input)
-        return -ENOMEM;
-
-    // 
-    while ((token = strsep(&input, " \t\n")) != NULL) {
-        if (*token == '\0')
-            continue;
-        if (argc >= DEF_I2C_JBD4040_MAX_ARGS) {
-            dev_warn(dev, "Too many arguments\n");
-            goto out;
-        }
-        argv[argc++] = token;
-    }
-
-    // 
-    if (argc != 2) {
-        dev_warn(dev, "Expected 2 arguments, got %d\n", argc);
-        goto out;
-    }
-
-    // 
-    if (!strcmp(argv[0], "r") || !strcmp(argv[0], "R")) {
-    }
-    else if (!strcmp(argv[0], "g") || !strcmp(argv[0], "G")) {
-    }
-    else if (!strcmp(argv[0], "b") || !strcmp(argv[0], "B")) {
-    }
-    else {
-        dev_warn(dev, "Panel incorrect: %s\n", argv[0]);
-        goto out;
-    }
-
-    // 
-    unsigned int en;
-    ret = kstrtouint(argv[1], 0, &en);
-    if (ret) {
-        dev_warn(dev, "Invalid value: %s\n", argv[1]);
-        goto out;
-    }
-
-    // 
-    en &= 0x01;
-    dev_info(dev, "Parsed: panel=%s, en=%d", argv[0], en);
-
-    // TODO: I2C
-    u32 value = en << __builtin_ctz(itemattr->bitmask);
-    if (!i2c_read_reg32(gClientR, itemattr->addr, &temp)) {
-        temp &= ~itemattr->bitmask;
-        temp |= (value & itemattr->bitmask);
-        i2c_write_reg32(gClientR, itemattr->addr, temp);
-
-        // VO path setting
-        value = en << 31;
-        if (!i2c_read_reg32(gClientR, REG_FMO_VO, &temp)) {
-            temp &= ~MASK_FLIP_VO;
-            temp |= (value & MASK_FLIP_VO);
-            i2c_write_reg32(gClientR, REG_FMO_VO, temp);
-        }
-    }
-    value = en << __builtin_ctz(itemattr->bitmask);
-    if (!i2c_read_reg32(gClientG, itemattr->addr, &temp)) {
-        temp &= ~itemattr->bitmask;
-        temp |= (value & itemattr->bitmask);
-        i2c_write_reg32(gClientG, itemattr->addr, temp);
-
-        // VO path setting
-        value = en << 31;
-        if (!i2c_read_reg32(gClientG, REG_FMO_VO, &temp)) {
-            temp &= ~MASK_FLIP_VO;
-            temp |= (value & MASK_FLIP_VO);
-            i2c_write_reg32(gClientG, REG_FMO_VO, temp);
-        }
-    }
-    value = en << __builtin_ctz(itemattr->bitmask);
-    if (!i2c_read_reg32(gClientB, itemattr->addr, &temp)) {
-        temp &= ~itemattr->bitmask;
-        temp |= (value & itemattr->bitmask);
-        i2c_write_reg32(gClientB, itemattr->addr, temp);
-
-        // VO path setting
-        value = en << 31;
-        if (!i2c_read_reg32(gClientB, REG_FMO_VO, &temp)) {
-            temp &= ~MASK_FLIP_VO;
-            temp |= (value & MASK_FLIP_VO);
-            i2c_write_reg32(gClientB, REG_FMO_VO, temp);
-        }
-    }
-
-out:
-    kfree(input);
-    return count;
-#endif
-}
 
 static ssize_t store_mirror(struct device *dev, struct my_dev_attr *itemattr, const char *buf, size_t count)
 {
@@ -1759,112 +1707,6 @@ static ssize_t store_mirror(struct device *dev, struct my_dev_attr *itemattr, co
 }
 
 
-static ssize_t store_mirror_dep(struct device *dev, struct my_dev_attr *itemattr,
-                            const char *buf, size_t count)
-{
-    char *input, *token;
-    char *argv[DEF_I2C_JBD4040_MAX_ARGS];
-    int argc = 0;
-    int ret;
-    uint32_t temp;
-#if 1
-    return count;
-#else
-    // 
-    input = kstrndup(buf, count, GFP_KERNEL);
-    if (!input)
-        return -ENOMEM;
-
-    // 
-    while ((token = strsep(&input, " \t\n")) != NULL) {
-        if (*token == '\0')
-            continue;
-        if (argc >= DEF_I2C_JBD4040_MAX_ARGS) {
-            dev_warn(dev, "Too many arguments\n");
-            goto out;
-        }
-        argv[argc++] = token;
-    }
-
-    // 
-    if (argc != 2) {
-        dev_warn(dev, "Expected 2 arguments, got %d\n", argc);
-        goto out;
-    }
-
-    // 
-    if (!strcmp(argv[0], "r") || !strcmp(argv[0], "R")) {
-    }
-    else if (!strcmp(argv[0], "g") || !strcmp(argv[0], "G")) {
-    }
-    else if (!strcmp(argv[0], "b") || !strcmp(argv[0], "B")) {
-    }
-    else {
-        dev_warn(dev, "Panel incorrect: %s\n", argv[0]);
-        goto out;
-    }
-
-    // 
-    unsigned int en;
-    ret = kstrtouint(argv[1], 0, &en);
-    if (ret) {
-        dev_warn(dev, "Invalid value: %s\n", argv[1]);
-        goto out;
-    }
-
-    // 
-    en &= 0x01;
-    dev_info(dev, "Parsed: panel=%s, en=%d", argv[0], en);
-
-    // TODO: I2C
-    u32 value = en << __builtin_ctz(itemattr->bitmask);
-    if (!i2c_read_reg32(gClientR, itemattr->addr, &temp)) {
-        temp &= ~itemattr->bitmask;
-        temp |= (value & itemattr->bitmask);
-        i2c_write_reg32(gClientR, itemattr->addr, temp);
-
-        // VO path setting
-        value = en << 30;
-        if (!i2c_read_reg32(gClientR, REG_FMO_VO, &temp)) {
-            temp &= ~MASK_MIRROR_VO;
-            temp |= (value & MASK_MIRROR_VO);
-            i2c_write_reg32(gClientR, REG_FMO_VO, temp);
-        }
-    }
-    value = !en << __builtin_ctz(itemattr->bitmask);
-    if (!i2c_read_reg32(gClientG, itemattr->addr, &temp)) {
-        temp &= ~itemattr->bitmask;
-        temp |= (value & itemattr->bitmask);
-        i2c_write_reg32(gClientG, itemattr->addr, temp);
-
-        // VO path setting
-        value = !en << 30;
-        if (!i2c_read_reg32(gClientG, REG_FMO_VO, &temp)) {
-            temp &= ~MASK_MIRROR_VO;
-            temp |= (value & MASK_MIRROR_VO);
-            i2c_write_reg32(gClientG, REG_FMO_VO, temp);
-        }
-    }
-    value = en << __builtin_ctz(itemattr->bitmask);
-    if (!i2c_read_reg32(gClientB, itemattr->addr, &temp)) {
-        temp &= ~itemattr->bitmask;
-        temp |= (value & itemattr->bitmask);
-        i2c_write_reg32(gClientB, itemattr->addr, temp);
-
-        // VO path setting
-        value = en << 30;
-        if (!i2c_read_reg32(gClientB, REG_FMO_VO, &temp)) {
-            temp &= ~MASK_MIRROR_VO;
-            temp |= (value & MASK_MIRROR_VO);
-            i2c_write_reg32(gClientB, REG_FMO_VO, temp);
-        }
-    }
-
-out:
-    kfree(input);
-    return count;
-#endif
-}
 
 static ssize_t store_offset(struct device *dev, struct my_dev_attr *itemattr, const char *buf, size_t count)
 {
@@ -1982,6 +1824,65 @@ out:
     return count;
 }
 
+static ssize_t store_fps(struct device *dev, struct my_dev_attr *itemattr, const char *buf, size_t count)
+{
+    struct i2c_client *client = to_i2c_client(dev);
+    u32 reg_addr = itemattr->addr ? itemattr->addr : 0x200a00;
+    uint32_t target_fps;
+    uint8_t target_idx = 0xFF;
+    uint16_t reg_val = 0;
+    int i, ret;
+    uint8_t orig_addr;
+
+    if (!client)
+        return -ENODEV;
+
+    /* 1. 解析 User space 傳入的 FPS 數值 */
+    if (kstrtou32(buf, 10, &target_fps)) {
+        dev_err(dev, "Invalid FPS value: %s\n", buf);
+        return -EINVAL;
+    }
+
+    /* 2. 反向查表找出對應的 pl_refresh_freq (Bit [2:0]) 索引 */
+    for (i = 0; i < ARRAY_SIZE(fps_array); i++) {
+        if (fps_array[i] == target_fps) {
+            target_idx = i;
+            break;
+        }
+    }
+
+    if (target_idx == 0xFF) {
+        dev_err(dev, "Unsupported FPS: %u. Supported: 60, 90, 120, 180, 240, 360, 420\n", target_fps);
+        return -EINVAL;
+    }
+
+    /* 3. Read-Modify-Write: 先向 0x59 讀出目前的設定值 (為了保留 Bit 3 等其他控制位元如 sc_10b_sel) */
+    orig_addr = client->addr;
+    client->addr = JBD4040_I2C_ADDR_RED;
+    ret = i2c_read_reg16(client, reg_addr, &reg_val);
+    client->addr = orig_addr; /* 轉回 0x58 廣播位址 */
+
+    if (ret < 0) {
+        dev_err(dev, "Failed to read register 0x%06x before writing\n", reg_addr);
+        return -EIO;
+    }
+
+    /* 4. 修改 Bit [2:0]，其餘位元 (保留欄位與 Bit 3) 不變 */
+    reg_val &= ~0x0007;        /* 清除舊有更新率設定 */
+    reg_val |= target_idx;     /* 填入新的頻率索引 */
+
+    /* 5. 💡 關鍵：直接以 client (0x58 廣播位址) 寫入一次，三顆面板同步生效！ */
+    ret = i2c_write_reg16(client, reg_addr, reg_val);
+    if (ret < 0) {
+        dev_err(dev, "Failed to broadcast FPS %u to all panels\n", target_fps);
+        return -EIO;
+    }
+
+    dev_info(dev, "Successfully broadcasted FPS %u (val: 0x%04x) to all panels via 0x%02x\n", 
+             target_fps, reg_val, client->addr);
+
+    return count;
+}
 
 static ssize_t my_attr_show(struct device *dev,
                             struct device_attribute *attr, char *buf)
@@ -2006,6 +1907,9 @@ static ssize_t my_attr_show(struct device *dev,
     }
     else if (!strcmp("offset", myattr->label)) {
         count = show_offset(dev, myattr, buf);
+    }
+    else if (!strcmp("fps", myattr->label)) {
+        count = show_fps(dev, myattr, buf);
     }
     else {
         count = scnprintf(buf, PAGE_SIZE, "Label: %s, Addr: 0x%02x\n",
@@ -2037,6 +1941,9 @@ static ssize_t my_attr_store(struct device *dev,
     }
     if (!strcmp("offset", myattr->label)) {
         store_offset(dev, myattr, buf, count);
+    }
+    if (!strcmp("fps", myattr->label)) {
+        store_fps(dev, myattr, buf, count);
     }
     
     return count;
@@ -2148,12 +2055,88 @@ static int jbd4040_update_gamma(struct i2c_client *client, const uint16_t *gamma
     return 0;
 }
 
+static int read_core_version(struct i2c_client *client)
+{
+    int32_t ret = 0;
+    uint32_t core_version;
+    //++++++++ read core_version +++++++++++
+    ret = i2c_read_reg32(client, REG_CORE_VERSION, &core_version);
+    if (ret < 0) {
+        pr_err("jbd4040: Failed to read CORE_VERSION\n");
+        return ret;
+    }
+    pr_info("jbd4040 COER_VERSION: 0x%08X\n", core_version);
+    //--------- read core_version ---------
+    return ret; 
+}
+
+
+static int read_efuse_id(struct i2c_client *client)
+{
+    int32_t ret = 0;
+    uint16_t efuse_id0, efuse_id1, efuse_id2, efuse_id3, efuse_id4, efuse_id5, efuse_id6, efuse_id7;
+    pr_info("jbd4040 going to read efuse id\n");    
+    //++++++++ read efuse id +++++++++++++++++++++
+    ret = i2c_read_reg16(client, REG_EFUSE_ID0, &efuse_id0);
+    if (ret < 0) {
+        pr_err("jbd4040: Failed to read EFUSE_ID0\n");
+        return ret;
+    }
+    ret = i2c_read_reg16(client, REG_EFUSE_ID1, &efuse_id1);
+    if (ret < 0) {
+        pr_err("jbd4040: Failed to read EFUSE_ID1\n");
+        return ret;
+    }
+    ret = i2c_read_reg16(client, REG_EFUSE_ID2, &efuse_id2);
+    if (ret < 0) {
+        pr_err("jbd4040: Failed to read EFUSE_ID2\n");
+        return ret;
+    }
+    ret = i2c_read_reg16(client, REG_EFUSE_ID3, &efuse_id3);
+    if (ret < 0) {
+        pr_err("jbd4040: Failed to read EFUSE_ID3\n");
+        return ret;
+    }
+    ret = i2c_read_reg16(client, REG_EFUSE_ID4, &efuse_id4);
+    if (ret < 0) {
+        pr_err("jbd4040: Failed to read EFUSE_ID4\n");
+        return ret;
+    }
+    ret = i2c_read_reg16(client, REG_EFUSE_ID5, &efuse_id5);
+    if (ret < 0) {
+        pr_err("jbd4040: Failed to read EFUSE_ID5\n");
+        return ret;
+    }
+    ret = i2c_read_reg16(client, REG_EFUSE_ID6, &efuse_id6);
+    if (ret < 0) {
+        pr_err("jbd4040: Failed to read EFUSE_ID6\n");
+        return ret;
+    }
+    ret = i2c_read_reg16(client, REG_EFUSE_ID7, &efuse_id7);
+    if (ret < 0) {
+        pr_err("jbd4040: Failed to read EFUSE_ID7\n");
+        return ret;
+    }
+    pr_info("jbd4040 EFUSE_ID0: 0x%08X\n", efuse_id0);
+    pr_info("jbd4040 EFUSE_ID1: 0x%08X\n", efuse_id1);
+    pr_info("jbd4040 EFUSE_ID2: 0x%08X\n", efuse_id2);
+    pr_info("jbd4040 EFUSE_ID3: 0x%08X\n", efuse_id3);
+    pr_info("jbd4040 EFUSE_ID4: 0x%08X\n", efuse_id4);
+    pr_info("jbd4040 EFUSE_ID5: 0x%08X\n", efuse_id5);
+    pr_info("jbd4040 EFUSE_ID6: 0x%08X\n", efuse_id6);
+    pr_info("jbd4040 EFUSE_ID7: 0x%08X\n", efuse_id7);
+    //-------- read efuse id ------------
+
+    return ret;    
+}
 
 static int jbd4040_init_registers(struct i2c_client *client)
 {
     uint8_t orig_addr = client->addr; /* 備份原本 DTS 的 I2C 位址 (0x59) */
     uint16_t chip_id0 = 0;
     uint16_t chip_id1 = 0;
+    //uint16_t efuse_id0, efuse_id1, efuse_id2, efuse_id3, efuse_id4, efuse_id5, efuse_id6, efuse_id7;	
+    //uint32_t core_version;
     int ret;
 
     pr_info("Venom jbd4040: Executing real initialization sequence from Python...\n");
@@ -2177,7 +2160,8 @@ static int jbd4040_init_registers(struct i2c_client *client)
     i2c_write_reg32(client, 0x201004, 0x00000001);
     i2c_write_reg32(client, 0x20100c, 0x00000000);
     i2c_write_reg32(client, 0x201028, 0x0000000f);
-    i2c_write_reg32(client, 0x20102c, 0x00000004);
+    //i2c_write_reg32(client, 0x20102c, 0x00000004);
+    i2c_write_reg32(client, 0x20102c, 0x00000008);
     i2c_write_reg32(client, 0x202000, 0x0000007d);
     i2c_write_reg32(client, 0x2021e0, 0x00000008);
 
@@ -2207,7 +2191,13 @@ static int jbd4040_init_registers(struct i2c_client *client)
     i2c_write_reg16(client, 0x200b06, 0x0000);
 
     /* --- Algorithm Initialization --- */
-    i2c_write_reg16(client, 0x200d30, 0x0002);
+    // ori
+    //i2c_write_reg16(client, 0x200d30, 0x0002);
+    //+++++++ jbd suggest ++++++++++
+    i2c_write_reg16(client, 0x200d30, 0x0003);
+    i2c_write_reg16(client, 0x200d3a, 0x0210);
+    //------- jbd suggest -----------
+
     i2c_write_reg16(client, 0x200d34, 0x80a1);
     i2c_write_reg16(client, 0x200204, 0x03ff);
 
@@ -2267,6 +2257,71 @@ static int jbd4040_init_registers(struct i2c_client *client)
     pr_info("jbd4040 CHIP_ID0: 0x%08X\n", chip_id0);
     pr_info("jbd4040 CHIP_ID1: 0x%08X\n", chip_id1);
     pr_info("=========================================\n");
+
+#if 1
+    read_core_version(client);
+    read_efuse_id(client);
+#else
+    //++++++++ read efuse id +++++++++++++++++++++
+    ret = i2c_read_reg16(client, REG_EFUSE_ID0, &efuse_id0);
+    if (ret < 0) {
+        pr_err("jbd4040: Failed to read EFUSE_ID0\n");
+        return ret;
+    }
+    ret = i2c_read_reg16(client, REG_EFUSE_ID1, &efuse_id1);
+    if (ret < 0) {
+        pr_err("jbd4040: Failed to read EFUSE_ID1\n");
+        return ret;
+    }
+    ret = i2c_read_reg16(client, REG_EFUSE_ID2, &efuse_id2);
+    if (ret < 0) {
+        pr_err("jbd4040: Failed to read EFUSE_ID2\n");
+        return ret;
+    }
+    ret = i2c_read_reg16(client, REG_EFUSE_ID3, &efuse_id3);
+    if (ret < 0) {
+        pr_err("jbd4040: Failed to read EFUSE_ID3\n");
+        return ret;
+    }
+    ret = i2c_read_reg16(client, REG_EFUSE_ID4, &efuse_id4);
+    if (ret < 0) {
+        pr_err("jbd4040: Failed to read EFUSE_ID4\n");
+        return ret;
+    }
+    ret = i2c_read_reg16(client, REG_EFUSE_ID5, &efuse_id5);
+    if (ret < 0) {
+        pr_err("jbd4040: Failed to read EFUSE_ID5\n");
+        return ret;
+    }
+    ret = i2c_read_reg16(client, REG_EFUSE_ID6, &efuse_id6);
+    if (ret < 0) {
+        pr_err("jbd4040: Failed to read EFUSE_ID6\n");
+        return ret;
+    }
+    ret = i2c_read_reg16(client, REG_EFUSE_ID7, &efuse_id7);
+    if (ret < 0) {
+        pr_err("jbd4040: Failed to read EFUSE_ID7\n");
+        return ret;
+    }
+    pr_info("jbd4040 EFUSE_ID0: 0x%08X\n", efuse_id0);
+    pr_info("jbd4040 EFUSE_ID1: 0x%08X\n", efuse_id1);
+    pr_info("jbd4040 EFUSE_ID2: 0x%08X\n", efuse_id2);
+    pr_info("jbd4040 EFUSE_ID3: 0x%08X\n", efuse_id3);
+    pr_info("jbd4040 EFUSE_ID4: 0x%08X\n", efuse_id4);
+    pr_info("jbd4040 EFUSE_ID5: 0x%08X\n", efuse_id5);
+    pr_info("jbd4040 EFUSE_ID6: 0x%08X\n", efuse_id6);
+    pr_info("jbd4040 EFUSE_ID7: 0x%08X\n", efuse_id7);
+    //-------- read efuse id ------------
+    
+    //++++++++ read core_version +++++++++++
+    ret = i2c_read_reg32(client, REG_CORE_VERSION, &core_version);
+    if (ret < 0) {
+        pr_err("jbd4040: Failed to read CORE_VERSION\n");
+        return ret;
+    }
+    pr_info("jbd4040 COER_VERSION: 0x%08X\n", core_version);
+    //--------- read core_version --------- 
+#endif
     return 0;
 }
 

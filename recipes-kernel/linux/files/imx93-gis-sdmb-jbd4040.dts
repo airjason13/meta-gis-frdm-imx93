@@ -107,6 +107,11 @@
                 		bitmask = <0x00001f1f>;
                 		label = "offset";
             		};
+                        fps@200a00 {
+                                reg = <0x200a00>;
+                                bitmask = <0x00000007>;
+                                label = "fps"; 
+                        };
         	};
         };
     	panel_g@59 {
