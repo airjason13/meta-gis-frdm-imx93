@@ -4,6 +4,7 @@ FILESEXTRAPATHS:append := "${THISDIR}/files"
 SRC_URI += "file://pyMessageServer \
             file://armessageserver.service \
             file://run_pyMessageServer.sh \ 
+            file://main.conf \ 
            "
 
 
@@ -13,11 +14,13 @@ inherit systemd
 
 do_install() {
         install -d ${D}${bindir}
+        install -d ${D}${sysconfdir}/bluetooth/
         install -d ${D}${systemd_system_unitdir}
 	install -d ${D}/root/pyMessageServer/
         cp -r pyMessageServer/* ${D}/root/pyMessageServer
         install -m 0644 ${S}/armessageserver.service ${D}${systemd_system_unitdir}/armessageserver.service
         install -m 0755 ${S}/run_pyMessageServer.sh ${D}${bindir}/run_pyMessageServer.sh
+        install -m 0755 ${S}/main.conf ${D}${sysconfdir}/bluetooth/main.conf
 }
 
 FILES:${PN} += " \

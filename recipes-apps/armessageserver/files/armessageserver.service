@@ -1,11 +1,13 @@
 [Unit]
 Description=python AR Glasses Message Server app
+After=dbus.service 
 
 [Service]
 Type=exec
 ExecStart=/usr/bin/run_pyMessageServer.sh
 KillMode=mixed
 Restart=on-failure
-
+Environment="TERM=xterm-256color"
+Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus"
 [Install]
 WantedBy=graphical.target
