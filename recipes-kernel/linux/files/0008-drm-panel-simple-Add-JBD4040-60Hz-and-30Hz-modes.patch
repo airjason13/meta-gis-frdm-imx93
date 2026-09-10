@@ -1,0 +1,97 @@
+From de2b698f2d207d04e95baa63feeb5468428074a2 Mon Sep 17 00:00:00 2001
+From: airjason13 <airjason13@gmail.com>
+Date: Wed, 9 Sep 2026 07:38:00 +0000
+Subject: [PATCH] drm/panel-simple: Add JBD4040 60Hz and 30Hz modes
+
+---
+ drivers/gpu/drm/panel/panel-simple.c | 66 ++++++++++++++++++++++++++++
+ 1 file changed, 66 insertions(+)
+
+diff --git a/drivers/gpu/drm/panel/panel-simple.c b/drivers/gpu/drm/panel/panel-simple.c
+index f642ee2f4884..930a73d7a18a 100644
+--- a/drivers/gpu/drm/panel/panel-simple.c
++++ b/drivers/gpu/drm/panel/panel-simple.c
+@@ -4932,7 +4932,67 @@ static const struct panel_desc_dsi jbd4040 = {
+         .lanes = 1,
+ };
+ 
++static const struct drm_display_mode jbd4040_60hz_mode = {
++        .hdisplay = 380,
++        .hsync_start = 380 + 58,
++        .hsync_end = 380 + 58 + 4,
++        .htotal = 380 + 58 + 4 + 58,
++
++        .vdisplay = 500,
++        .vsync_start = 500 + 18,
++        .vsync_end = 500 + 18 + 2,
++        .vtotal = 500 + 18 + 2 + 20,
++
++        .clock = 16200,
++};
++
++static const struct panel_desc_dsi jbd4040_60Hz = {
++        .desc = {
++                .modes = &jbd4040_60hz_mode,
++                .num_modes = 1,
++                .bpc = 8,
++                .size = {
++                        .width = 10,
++                        .height = 13,
++                },
++                .connector_type = DRM_MODE_CONNECTOR_DSI,
++        },
++        .flags = MIPI_DSI_MODE_VIDEO |
++                 MIPI_DSI_MODE_VIDEO_SYNC_PULSE,
++        .format = MIPI_DSI_FMT_RGB888,
++        .lanes = 1,
++};
+ 
++static const struct drm_display_mode jbd4040_30hz_mode = {
++        .hdisplay = 380,
++        .hsync_start = 380 + 58,
++        .hsync_end = 380 + 58 + 4,
++        .htotal = 380 + 58 + 4 + 58,
++
++        .vdisplay = 500,
++        .vsync_start = 500 + 18,
++        .vsync_end = 500 + 18 + 2,
++        .vtotal = 500 + 18 + 2 + 20,
++
++        .clock = 8100,
++};
++
++static const struct panel_desc_dsi jbd4040_30Hz = {
++        .desc = {
++                .modes = &jbd4040_30hz_mode,
++                .num_modes = 1,
++                .bpc = 8,
++                .size = {
++                        .width = 10,
++                        .height = 13,
++                },
++                .connector_type = DRM_MODE_CONNECTOR_DSI,
++        },
++        .flags = MIPI_DSI_MODE_VIDEO |
++                 MIPI_DSI_MODE_VIDEO_SYNC_PULSE,
++        .format = MIPI_DSI_FMT_RGB888,
++        .lanes = 1,
++};
+ 
+ static const struct of_device_id dsi_of_match[] = {
+ 	{
+@@ -4960,6 +5020,12 @@ static const struct of_device_id dsi_of_match[] = {
+ 		.compatible = "gis,jbd4040_160",
+ 		.data = &jbd4040
+ 	}, {
++		.compatible = "gis,jbd4040_60hz",
++                .data = &jbd4040_60Hz
++        }, {
++                .compatible = "gis,jbd4040_30hz",
++                .data = &jbd4040_30Hz
++        }, {
+ 		/* sentinel */
+ 	}
+ };
+-- 
+2.44.1
+

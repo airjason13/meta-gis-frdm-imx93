@@ -20,9 +20,12 @@ SRC_URI += "file://imx93-gis-frdm-dsi.dts \
             file://0005-add-jbd4020-i2c-Makefile.patch \
             file://0006-add-jbd4040-default-m.patch \
             file://0007-add-jbd4040-desc-in-panel-simple.patch \
+            file://0008-drm-panel-simple-Add-JBD4040-60Hz-and-30Hz-modes.patch \
             file://imx93-gis-frdm-jbd4020.dts \
             file://imx93-gis-sdmb-jbd4020.dts \
             file://imx93-gis-sdmb-jbd4040.dts \
+            file://imx93-gis-sdmb-jbd4040-30Hz.dts \
+            file://imx93-gis-sdmb-jbd4040-60Hz.dts \
             file://imx93-gis-sdmb-jbd4040-test.dts \
             file://imx93-gis-frdm-jbd4040.dts \
             file://imx93-gis-frdm-jbd4040-160.dts \
@@ -36,6 +39,8 @@ KERNEL_DEVICETREE:append = " freescale/imx93-gis-frdm-dsi.dtb \
                              freescale/imx93-gis-frdm-jbd4020.dtb \ 
                              freescale/imx93-gis-sdmb-jbd4020.dtb \ 
                              freescale/imx93-gis-sdmb-jbd4040.dtb \ 
+                             freescale/imx93-gis-sdmb-jbd4040-30Hz.dtb \ 
+                             freescale/imx93-gis-sdmb-jbd4040-60Hz.dtb \ 
                              freescale/imx93-gis-sdmb-jbd4040-test.dtb \ 
                              freescale/imx93-gis-frdm-jbd4040.dtb \ 
                              freescale/imx93-gis-frdm-jbd4040-160.dtb \ 
@@ -59,6 +64,10 @@ do_patch:append() {
         ${S}/arch/arm64/boot/dts/freescale/imx93-gis-sdmb-jbd4020.dts
     install -Dm0644 ${WORKDIR}/imx93-gis-sdmb-jbd4040.dts \
         ${S}/arch/arm64/boot/dts/freescale/imx93-gis-sdmb-jbd4040.dts
+    install -Dm0644 ${WORKDIR}/imx93-gis-sdmb-jbd4040-30Hz.dts \
+        ${S}/arch/arm64/boot/dts/freescale/imx93-gis-sdmb-jbd4040-30Hz.dts
+    install -Dm0644 ${WORKDIR}/imx93-gis-sdmb-jbd4040-60Hz.dts \
+        ${S}/arch/arm64/boot/dts/freescale/imx93-gis-sdmb-jbd4040-60Hz.dts
     install -Dm0644 ${WORKDIR}/imx93-gis-sdmb-jbd4040-test.dts \
         ${S}/arch/arm64/boot/dts/freescale/imx93-gis-sdmb-jbd4040-test.dts
     install -Dm0644 ${WORKDIR}/imx93-gis-frdm-jbd4040.dts \

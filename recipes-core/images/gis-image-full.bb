@@ -13,6 +13,8 @@ IMAGE_BOOT_FILES:append = " imx93-gis-frdm-dsi.dtb \
                             imx93-gis-sdmb.dtb \
                             imx93-gis-sdmb-jbd4020.dtb \
                             imx93-gis-sdmb-jbd4040.dtb \
+                            imx93-gis-sdmb-jbd4040-30Hz.dtb \
+                            imx93-gis-sdmb-jbd4040-60Hz.dtb \
                             imx93-gis-sdmb-jbd4040-test.dtb \
                             imx93-gis-frdm-jbd4040.dtb \
                             imx93-gis-frdm-jbd4040-160.dtb \

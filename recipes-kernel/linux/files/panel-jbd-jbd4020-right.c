@@ -222,7 +222,7 @@ static int jbd4020_unprepare(struct drm_panel *panel)
 };*/
 
 //fps : 60.000
-/*static const struct drm_display_mode jbd4020_default_mode = {
+static const struct drm_display_mode jbd4020_default_mode = {
 	.hdisplay = 640,
 	.hsync_start = 640 + 20,
 	.hsync_end = 640 + 20 + 10,
@@ -236,25 +236,7 @@ static int jbd4020_unprepare(struct drm_panel *panel)
 	// clock = htotoal * vtotal * fps /1000
 	.clock = 21000, // 40FPS 14063, 60.02FPS 21100
 
-};*/
-
-//fps : 75.000 
-static const struct drm_display_mode jbd4020_default_mode = {
-	.hdisplay = 640,
-	.hsync_start = 640 + 20,
-	.hsync_end = 640 + 20 + 4,
-	.htotal = 640 + 20 + 4 + 16,
-
-	.vdisplay = 480,
-	.vsync_start = 480 + 26,
-	.vsync_end = 480 + 26 + 2,
-	.vtotal = 480 + 26 + 2 + 2,
-
-	// clock = htotoal * vtotal * fps /1000
-	.clock = 26010, // 40FPS 14063, 60.02FPS 21100
-
 };
-
 
 static int jbd4020_get_modes(struct drm_panel *panel,
                   struct drm_connector *connector)

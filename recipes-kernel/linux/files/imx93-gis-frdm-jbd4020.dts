@@ -4,6 +4,7 @@
  */
 
 #include "imx93-gis-frdm.dts"
+//#include "imx93-11x11-frdm.dts"
 
 &lvds_bridge {
 	status = "disabled";
@@ -56,10 +57,20 @@
     };
 };
 
+//&lcdif {
+//	assigned-clock-rates = <400000000>, <50000000>, <400000000>, <133333333>;
+//};
+
 &lcdif {
-	//assigned-clock-rates = <484000000>, <121000000>, <400000000>, <133333333>;
-	assigned-clock-rates = <400000000>, <50000000>, <400000000>, <133333333>;
+        // 第一項：Video PLL 設為 422MHz (21.1MHz * 20)
+        // 第二項：Pixel clock 設為目標的 21.1MHz
+        // 第三、四項維持原來的匯流排頻率即可
+        //assigned-clock-rates = <422000000>, <21100000>, <400000000>, <133333333>; // 60FPS setting 1
+        assigned-clock-rates = <420000000>, <21000000>, <400000000>, <133333333>; // 60FPS setting 2
+        //assigned-clock-rates = <422000000>, <10550000>, <400000000>, <133333333>; // 30FPS
 };
+
+
 
 &lpi2c3 {
 	jbd4020: panel_r@59 {
