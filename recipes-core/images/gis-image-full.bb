@@ -16,6 +16,7 @@ IMAGE_BOOT_FILES:append = " imx93-gis-frdm-dsi.dtb \
                             imx93-gis-sdmb-jbd4040-30Hz.dtb \
                             imx93-gis-sdmb-jbd4040-60Hz.dtb \
                             imx93-gis-sdmb-jbd4040-test.dtb \
+                            imx93-gis-sdmb-jbd4040-neo.dtb \
                             imx93-gis-frdm-jbd4040.dtb \
                             imx93-gis-frdm-jbd4040-160.dtb \
                            "
@@ -42,6 +43,7 @@ IMAGE_INSTALL += " \
     libwebp \
     webp-pixbuf-loader \
     gdk-pixbuf \
+    fontconfig \
 "
 
 

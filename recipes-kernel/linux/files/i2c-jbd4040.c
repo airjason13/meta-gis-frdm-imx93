@@ -37,7 +37,7 @@ static int i2c_read_reg16(struct i2c_client *client, uint32_t reg, uint16_t *val
 static int i2c_write_reg16(struct i2c_client *client, uint32_t reg, uint16_t val);
 
 
-#define DEVICE_NAME "jbd4040"
+#define DEVICE_NAME "i2c-jbd4040"
 #define CLASS_NAME "gis"
 
 #define IOCTL_READ_REG32    _IOR('J', 0xF1, struct i2c_ioctl_data)

@@ -1,0 +1,36 @@
+From 1111111111111111111111111111111111111111 Mon Sep 17 00:00:00 2001
+From: GIS <gis@example.com>
+Date: Thu, 10 Sep 2026 16:40:00 +0800
+Subject: [PATCH] Add JBD4040 MIPI Command Mode panel driver Kconfig and Makefile
+
+---
+ drivers/gpu/drm/panel/Kconfig  | 8 ++++++++
+ drivers/gpu/drm/panel/Makefile | 1 +
+ 2 files changed, 9 insertions(+)
+
+diff --git a/drivers/gpu/drm/panel/Kconfig b/drivers/gpu/drm/panel/Kconfig
+index 776115ad84ea..92a15c32fa02 100644
+--- a/drivers/gpu/drm/panel/Kconfig
++++ b/drivers/gpu/drm/panel/Kconfig
+@@ -900,4 +900,12 @@ config DRM_PANEL_JBD_JBD4020_RIGHT
+       Say Y here if you want to enable support for the JB-Display
+       JBD4020 controller for 640x480 LCD panels with MIPI
+ 
++config DRM_PANEL_JBD_JBD4040
++    tristate "JB-Display JBD4040 MIPI panel driver"
++    depends on OF
++    depends on DRM_MIPI_DSI
++    help
++      Say M here to enable support for JB-Display JBD4040 panel in
++      MIPI mode as a loadable kernel module.
++
+ endmenu
+diff --git a/drivers/gpu/drm/panel/Makefile b/drivers/gpu/drm/panel/Makefile
+index 2862f49aa660..431bb5623cf6 100644
+--- a/drivers/gpu/drm/panel/Makefile
++++ b/drivers/gpu/drm/panel/Makefile
+@@ -94,1 +94,2 @@ obj-$(CONFIG_DRM_PANEL_JBD_JBD4020_LEFT) += panel-jbd-jbd4020-left.o
+ obj-$(CONFIG_DRM_PANEL_JBD_JBD4020_RIGHT) += panel-jbd-jbd4020-right.o
++obj-$(CONFIG_DRM_PANEL_JBD_JBD4040) += panel-jbd4040.o
+-- 
+2.34.1

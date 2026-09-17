@@ -10,6 +10,8 @@ SRC_URI += "file://imx93-gis-frdm-dsi.dts \
             file://panel-jbd-jbd4020.h \
             file://panel-jbd-jbd4020.cfg \
             file://panel-jbd4040.cfg \
+            file://panel-jbd4040.c \
+            file://panel-jbd4040.h \
             file://i2c-jbd4020.c \
             file://i2c-jbd4040.c \
             file://0003-panel-kconfig-jbd4020.patch \
@@ -21,12 +23,14 @@ SRC_URI += "file://imx93-gis-frdm-dsi.dts \
             file://0006-add-jbd4040-default-m.patch \
             file://0007-add-jbd4040-desc-in-panel-simple.patch \
             file://0008-drm-panel-simple-Add-JBD4040-60Hz-and-30Hz-modes.patch \
+            file://0009-add-jbd4040-panel-driver.patch \
             file://imx93-gis-frdm-jbd4020.dts \
             file://imx93-gis-sdmb-jbd4020.dts \
             file://imx93-gis-sdmb-jbd4040.dts \
             file://imx93-gis-sdmb-jbd4040-30Hz.dts \
             file://imx93-gis-sdmb-jbd4040-60Hz.dts \
             file://imx93-gis-sdmb-jbd4040-test.dts \
+            file://imx93-gis-sdmb-jbd4040-neo.dts \
             file://imx93-gis-frdm-jbd4040.dts \
             file://imx93-gis-frdm-jbd4040-160.dts \
             file://imx93-gis-sdmb.dts \
@@ -42,6 +46,7 @@ KERNEL_DEVICETREE:append = " freescale/imx93-gis-frdm-dsi.dtb \
                              freescale/imx93-gis-sdmb-jbd4040-30Hz.dtb \ 
                              freescale/imx93-gis-sdmb-jbd4040-60Hz.dtb \ 
                              freescale/imx93-gis-sdmb-jbd4040-test.dtb \ 
+                             freescale/imx93-gis-sdmb-jbd4040-neo.dtb \ 
                              freescale/imx93-gis-frdm-jbd4040.dtb \ 
                              freescale/imx93-gis-frdm-jbd4040-160.dtb \ 
                              freescale/imx93-gis-sdmb.dtb \
@@ -64,6 +69,8 @@ do_patch:append() {
         ${S}/arch/arm64/boot/dts/freescale/imx93-gis-sdmb-jbd4020.dts
     install -Dm0644 ${WORKDIR}/imx93-gis-sdmb-jbd4040.dts \
         ${S}/arch/arm64/boot/dts/freescale/imx93-gis-sdmb-jbd4040.dts
+    install -Dm0644 ${WORKDIR}/imx93-gis-sdmb-jbd4040-neo.dts \
+        ${S}/arch/arm64/boot/dts/freescale/imx93-gis-sdmb-jbd4040-neo.dts
     install -Dm0644 ${WORKDIR}/imx93-gis-sdmb-jbd4040-30Hz.dts \
         ${S}/arch/arm64/boot/dts/freescale/imx93-gis-sdmb-jbd4040-30Hz.dts
     install -Dm0644 ${WORKDIR}/imx93-gis-sdmb-jbd4040-60Hz.dts \
@@ -79,6 +86,8 @@ do_patch:append() {
     install -m 0644 ${WORKDIR}/panel-jbd-jbd4020-left.c ${S}/drivers/gpu/drm/panel/panel-jbd-jbd4020-left.c
     install -m 0644 ${WORKDIR}/panel-jbd-jbd4020-right.c ${S}/drivers/gpu/drm/panel/panel-jbd-jbd4020-right.c
     install -m 0644 ${WORKDIR}/panel-jbd-jbd4020.h ${S}/drivers/gpu/drm/panel/panel-jbd-jbd4020.h
+    install -m 0644 ${WORKDIR}/panel-jbd4040.c ${S}/drivers/gpu/drm/panel/panel-jbd4040.c
+    install -m 0644 ${WORKDIR}/panel-jbd4040.h ${S}/drivers/gpu/drm/panel/panel-jbd4040.h
     install -m 0644 ${WORKDIR}/i2c-jbd4020.c ${S}/drivers/i2c/busses/i2c-jbd4020.c
     install -m 0644 ${WORKDIR}/i2c-jbd4040.c ${S}/drivers/i2c/busses/i2c-jbd4040.c
 }
