@@ -4,6 +4,7 @@ FILESEXTRAPATHS:append := "${THISDIR}/files"
 SRC_URI += "file://awe_show.mp4 \
             file://target_lock.mp4 \
             file://GenshinImpact.mp4 \
+            file://test-materials \
             "
 
 
@@ -20,6 +21,7 @@ do_install() {
 	cp awe_show.mp4 ${D}/root/MediaFiles/Media  
 	cp target_lock.mp4 ${D}/root/MediaFiles/Media 
 	cp GenshinImpact.mp4 ${D}/root/MediaFiles/Media  
+	install -m 0644 ${S}/test-materials/*.png ${D}/root/MediaFiles/Snapshots/
 }
 
 FILES:${PN} += " \

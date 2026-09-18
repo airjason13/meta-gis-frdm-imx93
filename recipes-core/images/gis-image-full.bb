@@ -87,4 +87,15 @@ IMAGE_INSTALL_PKCS11TOOL = ""
 IMAGE_INSTALL_PKCS11TOOL:mx8-nxp-bsp = "opensc pkcs11-provider"
 IMAGE_INSTALL_PKCS11TOOL:mx9-nxp-bsp = "opensc pkcs11-provider"
 
+# 每次編譯動態取得當前時間戳記 (月日小時分: MMDDhhmm，24小時制)
+BUILD_TIMESTAMP_SSID = "${@time.strftime('%m%d%H%M', time.localtime())}"
 
+update_uap0_ssid() {
+    CONF_FILE="${IMAGE_ROOTFS}/etc/uap0_hostapd.conf"
+    if [ -f "$CONF_FILE" ]; then
+        sed -i "s/^ssid=.*/ssid=GiS-${BUILD_TIMESTAMP_SSID}/" "$CONF_FILE"
+        bbnote "Updated uap0 SSID to GiS-${BUILD_TIMESTAMP_SSID} in $CONF_FILE"
+    fi
+}
+
+ROOTFS_POSTPROCESS_COMMAND += "update_uap0_ssid; "
