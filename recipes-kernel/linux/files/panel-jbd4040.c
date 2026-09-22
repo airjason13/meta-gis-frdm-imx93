@@ -177,6 +177,47 @@ static int jbd4040_i2c_read_reg32(struct i2c_adapter *adap, uint8_t dev_addr,
 	return 0;
 }
 
+static int jbd4040_i2c_read_block(struct i2c_adapter *adap, uint8_t dev_addr,
+				  uint32_t reg, uint8_t *buf, size_t len)
+{
+	uint8_t addr_buf[3];
+	struct i2c_msg msg_write, msg_read;
+
+	if (IS_ERR_OR_NULL(adap))
+		return -ENODEV;
+
+	/* 24-bit register address (Big-Endian) */
+	addr_buf[0] = (reg >> 16) & 0xFF;
+	addr_buf[1] = (reg >> 8) & 0xFF;
+	addr_buf[2] = reg & 0xFF;
+
+	/* Stage 1: Send address */
+	msg_write.addr = dev_addr;
+	msg_write.flags = 0;
+	msg_write.len = 3;
+	msg_write.buf = addr_buf;
+
+	if (i2c_transfer(adap, &msg_write, 1) != 1) {
+		pr_err("[JBD4040] I2C block read addr failed: reg 0x%06X (addr 0x%02X)\n",
+		       reg, dev_addr);
+		return -EIO;
+	}
+
+	/* Stage 2: Read data */
+	msg_read.addr = dev_addr;
+	msg_read.flags = I2C_M_RD;
+	msg_read.len = len;
+	msg_read.buf = buf;
+
+	if (i2c_transfer(adap, &msg_read, 1) != 1) {
+		pr_err("[JBD4040] I2C block read data failed: reg 0x%06X, len %zu (addr 0x%02X)\n",
+		       reg, len, dev_addr);
+		return -EIO;
+	}
+
+	return 0;
+}
+
 static int jbd4040_update_gamma(struct i2c_adapter *adap, uint8_t dev_addr,
 				const uint16_t *table)
 {
@@ -329,10 +370,10 @@ static int jbd4040_init_registers(struct jbd4040_panel_info *ctx)
 	/* 7. Load Gamma Table */
 	jbd4040_update_gamma(adap, all, jbd4040_gamma_2_2_table);
 
-	/* 8. Individual Color Panel Alignment & Flip */
-	jbd4040_i2c_write_reg16(adap, JBD4040_I2C_ADDR_RED, REG_IMG_FLIP, 0x0000);
-	jbd4040_i2c_write_reg16(adap, JBD4040_I2C_ADDR_GREEN, REG_IMG_FLIP, 0x0001);
-	jbd4040_i2c_write_reg16(adap, JBD4040_I2C_ADDR_BLUE, REG_IMG_FLIP, 0x0000);
+	/* 8. Individual Color Panel Alignment & Flip (Default: upright normal view) */
+	jbd4040_i2c_write_reg16(adap, JBD4040_I2C_ADDR_RED, REG_IMG_FLIP, 0x0003);
+	jbd4040_i2c_write_reg16(adap, JBD4040_I2C_ADDR_GREEN, REG_IMG_FLIP, 0x0002);
+	jbd4040_i2c_write_reg16(adap, JBD4040_I2C_ADDR_BLUE, REG_IMG_FLIP, 0x0003);
 
 	if (ret)
 		dev_err(&ctx->dsi->dev, "Failed to initialize JBD4040 registers!\n");
@@ -884,7 +925,8 @@ static ssize_t flip_show(struct device *dev, struct device_attribute *attr, char
 	if (jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_RED, REG_IMG_FLIP, &valR) == 0 &&
 	    jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_GREEN, REG_IMG_FLIP, &valG) == 0 &&
 	    jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_BLUE, REG_IMG_FLIP, &valB) == 0) {
-		if ((valR & 0x02) && (valG & 0x02) && (valB & 0x02))
+		/* Normal boot has Bit 1 = 1 (R=0x3, G=0x2, B=0x3). If Bit 1 is cleared, Flip is Enabled */
+		if (!(valR & 0x02) && !(valG & 0x02) && !(valB & 0x02))
 			enabled = true;
 	}
 
@@ -909,13 +951,15 @@ static ssize_t flip_store(struct device *dev, struct device_attribute *attr,
 	jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_BLUE, REG_IMG_FLIP, &valB);
 
 	if (cmd_val == 1) {
-		valR |= 0x0002;
-		valG |= 0x0002;
-		valB |= 0x0002;
-	} else if (cmd_val == 0) {
+		/* Enable Flip (invert from normal boot): clear Bit 1 */
 		valR &= ~0x0002;
 		valG &= ~0x0002;
 		valB &= ~0x0002;
+	} else if (cmd_val == 0) {
+		/* Disable Flip (restore normal boot): set Bit 1 */
+		valR |= 0x0002;
+		valG |= 0x0002;
+		valB |= 0x0002;
 	} else {
 		return -EINVAL;
 	}
@@ -939,7 +983,8 @@ static ssize_t mirror_show(struct device *dev, struct device_attribute *attr, ch
 	if (jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_RED, REG_IMG_FLIP, &valR) == 0 &&
 	    jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_GREEN, REG_IMG_FLIP, &valG) == 0 &&
 	    jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_BLUE, REG_IMG_FLIP, &valB) == 0) {
-		if ((valR & 0x01) && !(valG & 0x01) && (valB & 0x01))
+		/* Normal boot has R=bit0:1, G=bit0:0, B=bit0:1. If inverted (R=0, G=1, B=0), Mirror is Enabled */
+		if (!(valR & 0x01) && (valG & 0x01) && !(valB & 0x01))
 			enabled = true;
 	}
 
@@ -964,13 +1009,15 @@ static ssize_t mirror_store(struct device *dev, struct device_attribute *attr,
 	jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_BLUE, REG_IMG_FLIP, &valB);
 
 	if (cmd_val == 1) {
-		valR |= 0x0001;
-		valG &= ~0x0001;
-		valB |= 0x0001;
-	} else if (cmd_val == 0) {
+		/* Enable Mirror (invert from normal boot): R/B clear bit 0, G set bit 0 */
 		valR &= ~0x0001;
 		valG |= 0x0001;
 		valB &= ~0x0001;
+	} else if (cmd_val == 0) {
+		/* Disable Mirror (restore normal boot): R/B set bit 0, G clear bit 0 */
+		valR |= 0x0001;
+		valG &= ~0x0001;
+		valB |= 0x0001;
 	} else {
 		return -EINVAL;
 	}
@@ -1674,6 +1721,536 @@ static ssize_t pl_osc_trim_store(struct device *dev, struct device_attribute *at
 }
 static DEVICE_ATTR_RW(pl_osc_trim);
 
+/* =========================================================================
+ * Demura Attributes & Table Sysfs Interface
+ * ========================================================================= */
+
+static ssize_t demura_en_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct jbd4040_panel_info *ctx = g_jbd4040_ctx;
+	uint16_t valR = 0, valG = 0, valB = 0;
+
+	if (!ctx || IS_ERR_OR_NULL(ctx->i2c_adap))
+		return -ENODEV;
+
+	jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_RED, REG_DMR_CFG, &valR);
+	jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_GREEN, REG_DMR_CFG, &valG);
+	jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_BLUE, REG_DMR_CFG, &valB);
+
+	return scnprintf(buf, PAGE_SIZE, "R: %u\nG: %u\nB: %u\n",
+			 (valR >> 8) & 1, (valG >> 8) & 1, (valB >> 8) & 1);
+}
+
+static ssize_t demura_en_store(struct device *dev, struct device_attribute *attr,
+			       const char *buf, size_t count)
+{
+	struct jbd4040_panel_info *ctx = g_jbd4040_ctx;
+	char *input, *input_free, *token;
+	char *argv[DEF_I2C_JBD4040_MAX_ARGS];
+	int argc = 0, i;
+	uint32_t en_val;
+	uint16_t cur_val;
+	uint8_t dev_addr;
+
+	if (!ctx || IS_ERR_OR_NULL(ctx->i2c_adap))
+		return -ENODEV;
+
+	input = kstrndup(buf, count, GFP_KERNEL);
+	if (!input)
+		return -ENOMEM;
+	input_free = input;
+
+	while ((token = strsep(&input, " \t\n:")) != NULL) {
+		if (*token == '\0')
+			continue;
+		if (argc >= DEF_I2C_JBD4040_MAX_ARGS)
+			break;
+		argv[argc++] = token;
+	}
+
+	if (argc == 1) {
+		if (kstrtou32(argv[0], 0, &en_val) == 0) {
+			static const uint8_t addrs[3] = {
+				JBD4040_I2C_ADDR_RED,
+				JBD4040_I2C_ADDR_GREEN,
+				JBD4040_I2C_ADDR_BLUE
+			};
+			int j;
+			for (j = 0; j < 3; j++) {
+				cur_val = 0;
+				jbd4040_i2c_read_reg16(ctx->i2c_adap, addrs[j], REG_DMR_CFG, &cur_val);
+				cur_val = (cur_val & ~0x0100) | (en_val ? 0x0100 : 0x0000);
+				jbd4040_i2c_write_reg16(ctx->i2c_adap, addrs[j], REG_DMR_CFG, cur_val);
+			}
+			dev_info(dev, "Set ALL panel demura_en to %u\n", en_val ? 1 : 0);
+			kfree(input_free);
+			return count;
+		}
+	}
+
+	if (argc == 0 || argc % 2 != 0) {
+		kfree(input_free);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < argc; i += 2) {
+		char *color_str = argv[i];
+		char *val_str = argv[i+1];
+
+		if (kstrtou32(val_str, 0, &en_val))
+			continue;
+
+		if (!strcasecmp(color_str, "r"))
+			dev_addr = JBD4040_I2C_ADDR_RED;
+		else if (!strcasecmp(color_str, "g"))
+			dev_addr = JBD4040_I2C_ADDR_GREEN;
+		else if (!strcasecmp(color_str, "b"))
+			dev_addr = JBD4040_I2C_ADDR_BLUE;
+		else if (!strcasecmp(color_str, "all") || !strcasecmp(color_str, "w")) {
+			static const uint8_t addrs[3] = {
+				JBD4040_I2C_ADDR_RED,
+				JBD4040_I2C_ADDR_GREEN,
+				JBD4040_I2C_ADDR_BLUE
+			};
+			int j;
+			for (j = 0; j < 3; j++) {
+				cur_val = 0;
+				jbd4040_i2c_read_reg16(ctx->i2c_adap, addrs[j], REG_DMR_CFG, &cur_val);
+				cur_val = (cur_val & ~0x0100) | (en_val ? 0x0100 : 0x0000);
+				jbd4040_i2c_write_reg16(ctx->i2c_adap, addrs[j], REG_DMR_CFG, cur_val);
+			}
+			dev_info(dev, "Set ALL panel demura_en to %u\n", en_val ? 1 : 0);
+			continue;
+		} else {
+			continue;
+		}
+
+		cur_val = 0;
+		jbd4040_i2c_read_reg16(ctx->i2c_adap, dev_addr, REG_DMR_CFG, &cur_val);
+		cur_val = (cur_val & ~0x0100) | (en_val ? 0x0100 : 0x0000);
+		jbd4040_i2c_write_reg16(ctx->i2c_adap, dev_addr, REG_DMR_CFG, cur_val);
+		dev_info(dev, "Set %s panel demura_en to %u\n", color_str, en_val ? 1 : 0);
+	}
+
+	kfree(input_free);
+	return count;
+}
+static DEVICE_ATTR_RW(demura_en);
+
+static ssize_t demura_remap_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct jbd4040_panel_info *ctx = g_jbd4040_ctx;
+	uint16_t valR = 0, valG = 0, valB = 0;
+
+	if (!ctx || IS_ERR_OR_NULL(ctx->i2c_adap))
+		return -ENODEV;
+
+	jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_RED, REG_DMR_REMAP_VAL, &valR);
+	jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_GREEN, REG_DMR_REMAP_VAL, &valG);
+	jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_BLUE, REG_DMR_REMAP_VAL, &valB);
+
+	return scnprintf(buf, PAGE_SIZE, "R: %u\nG: %u\nB: %u\n",
+			 valR & 0x07FF, valG & 0x07FF, valB & 0x07FF);
+}
+
+static ssize_t demura_remap_store(struct device *dev, struct device_attribute *attr,
+				  const char *buf, size_t count)
+{
+	struct jbd4040_panel_info *ctx = g_jbd4040_ctx;
+	char *input, *input_free, *token;
+	char *argv[DEF_I2C_JBD4040_MAX_ARGS];
+	int argc = 0, i;
+	uint32_t val;
+	uint8_t dev_addr;
+
+	if (!ctx || IS_ERR_OR_NULL(ctx->i2c_adap))
+		return -ENODEV;
+
+	input = kstrndup(buf, count, GFP_KERNEL);
+	if (!input)
+		return -ENOMEM;
+	input_free = input;
+
+	while ((token = strsep(&input, " \t\n:")) != NULL) {
+		if (*token == '\0')
+			continue;
+		if (argc >= DEF_I2C_JBD4040_MAX_ARGS)
+			break;
+		argv[argc++] = token;
+	}
+
+	if (argc == 1) {
+		if (kstrtou32(argv[0], 0, &val) == 0) {
+			if (val > 2047)
+				val = 2047;
+			jbd4040_i2c_write_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_ALL,
+						REG_DMR_REMAP_VAL, (uint16_t)(val & 0x07FF));
+			dev_info(dev, "Set ALL panel demura_remap to %u\n", val);
+			kfree(input_free);
+			return count;
+		}
+	}
+
+	if (argc == 0 || argc % 2 != 0) {
+		kfree(input_free);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < argc; i += 2) {
+		char *color_str = argv[i];
+		char *val_str = argv[i+1];
+
+		if (kstrtou32(val_str, 0, &val))
+			continue;
+
+		if (val > 2047)
+			val = 2047;
+
+		if (!strcasecmp(color_str, "r"))
+			dev_addr = JBD4040_I2C_ADDR_RED;
+		else if (!strcasecmp(color_str, "g"))
+			dev_addr = JBD4040_I2C_ADDR_GREEN;
+		else if (!strcasecmp(color_str, "b"))
+			dev_addr = JBD4040_I2C_ADDR_BLUE;
+		else if (!strcasecmp(color_str, "all") || !strcasecmp(color_str, "w"))
+			dev_addr = JBD4040_I2C_ADDR_ALL;
+		else
+			continue;
+
+		jbd4040_i2c_write_reg16(ctx->i2c_adap, dev_addr, REG_DMR_REMAP_VAL,
+					(uint16_t)(val & 0x07FF));
+		dev_info(dev, "Set %s panel demura_remap to %u\n", color_str, val);
+	}
+
+	kfree(input_free);
+	return count;
+}
+static DEVICE_ATTR_RW(demura_remap);
+
+static ssize_t demura_dsc_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct jbd4040_panel_info *ctx = g_jbd4040_ctx;
+	uint16_t valR = 0, valG = 0, valB = 0;
+
+	if (!ctx || IS_ERR_OR_NULL(ctx->i2c_adap))
+		return -ENODEV;
+
+	jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_RED, REG_DSC_CFG, &valR);
+	jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_GREEN, REG_DSC_CFG, &valG);
+	jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_BLUE, REG_DSC_CFG, &valB);
+
+	return scnprintf(buf, PAGE_SIZE,
+			 "R: en=%u data=%u (raw: 0x%04x)\n"
+			 "G: en=%u data=%u (raw: 0x%04x)\n"
+			 "B: en=%u data=%u (raw: 0x%04x)\n",
+			 (valR >> 12) & 1, valR & 0x01FF, valR,
+			 (valG >> 12) & 1, valG & 0x01FF, valG,
+			 (valB >> 12) & 1, valB & 0x01FF, valB);
+}
+
+static ssize_t demura_dsc_store(struct device *dev, struct device_attribute *attr,
+				const char *buf, size_t count)
+{
+	struct jbd4040_panel_info *ctx = g_jbd4040_ctx;
+	char *input, *input_free, *token;
+	char *argv[DEF_I2C_JBD4040_MAX_ARGS];
+	int argc = 0, i;
+	uint32_t val;
+	uint16_t cur_val;
+	uint8_t dev_addr;
+
+	if (!ctx || IS_ERR_OR_NULL(ctx->i2c_adap))
+		return -ENODEV;
+
+	input = kstrndup(buf, count, GFP_KERNEL);
+	if (!input)
+		return -ENOMEM;
+	input_free = input;
+
+	while ((token = strsep(&input, " \t\n:")) != NULL) {
+		if (*token == '\0')
+			continue;
+		if (argc >= DEF_I2C_JBD4040_MAX_ARGS)
+			break;
+		argv[argc++] = token;
+	}
+
+	if (argc == 1) {
+		if (kstrtou32(argv[0], 0, &val) == 0) {
+			if (val > 0x1FF) {
+				jbd4040_i2c_write_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_ALL,
+							REG_DSC_CFG, (uint16_t)(val & 0x11FF));
+			} else {
+				static const uint8_t addrs[3] = {
+					JBD4040_I2C_ADDR_RED,
+					JBD4040_I2C_ADDR_GREEN,
+					JBD4040_I2C_ADDR_BLUE
+				};
+				int j;
+				for (j = 0; j < 3; j++) {
+					cur_val = 0x0100;
+					jbd4040_i2c_read_reg16(ctx->i2c_adap, addrs[j], REG_DSC_CFG, &cur_val);
+					cur_val = (cur_val & ~0x01FF) | (val & 0x01FF);
+					jbd4040_i2c_write_reg16(ctx->i2c_adap, addrs[j], REG_DSC_CFG, cur_val);
+				}
+			}
+			dev_info(dev, "Set ALL panel demura_dsc to 0x%04x\n", val);
+			kfree(input_free);
+			return count;
+		}
+	}
+
+	if (argc == 0 || argc % 2 != 0) {
+		kfree(input_free);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < argc; i += 2) {
+		char *color_str = argv[i];
+		char *val_str = argv[i+1];
+
+		if (kstrtou32(val_str, 0, &val))
+			continue;
+
+		if (!strcasecmp(color_str, "r"))
+			dev_addr = JBD4040_I2C_ADDR_RED;
+		else if (!strcasecmp(color_str, "g"))
+			dev_addr = JBD4040_I2C_ADDR_GREEN;
+		else if (!strcasecmp(color_str, "b"))
+			dev_addr = JBD4040_I2C_ADDR_BLUE;
+		else if (!strcasecmp(color_str, "all") || !strcasecmp(color_str, "w"))
+			dev_addr = JBD4040_I2C_ADDR_ALL;
+		else
+			continue;
+
+		if (dev_addr == JBD4040_I2C_ADDR_ALL) {
+			if (val > 0x1FF) {
+				jbd4040_i2c_write_reg16(ctx->i2c_adap, dev_addr, REG_DSC_CFG,
+							(uint16_t)(val & 0x11FF));
+			} else {
+				static const uint8_t addrs[3] = {
+					JBD4040_I2C_ADDR_RED,
+					JBD4040_I2C_ADDR_GREEN,
+					JBD4040_I2C_ADDR_BLUE
+				};
+				int j;
+				for (j = 0; j < 3; j++) {
+					cur_val = 0x0100;
+					jbd4040_i2c_read_reg16(ctx->i2c_adap, addrs[j], REG_DSC_CFG, &cur_val);
+					cur_val = (cur_val & ~0x01FF) | (val & 0x01FF);
+					jbd4040_i2c_write_reg16(ctx->i2c_adap, addrs[j], REG_DSC_CFG, cur_val);
+				}
+			}
+		} else {
+			if (val > 0x1FF) {
+				jbd4040_i2c_write_reg16(ctx->i2c_adap, dev_addr, REG_DSC_CFG,
+							(uint16_t)(val & 0x11FF));
+			} else {
+				cur_val = 0x0100;
+				jbd4040_i2c_read_reg16(ctx->i2c_adap, dev_addr, REG_DSC_CFG, &cur_val);
+				cur_val = (cur_val & ~0x01FF) | (val & 0x01FF);
+				jbd4040_i2c_write_reg16(ctx->i2c_adap, dev_addr, REG_DSC_CFG, cur_val);
+			}
+		}
+		dev_info(dev, "Set %s panel demura_dsc to 0x%04x\n", color_str, val);
+	}
+
+	kfree(input_free);
+	return count;
+}
+static DEVICE_ATTR_RW(demura_dsc);
+
+static ssize_t demura_seg_th_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct jbd4040_panel_info *ctx = g_jbd4040_ctx;
+	uint16_t valR = 0, valG = 0, valB = 0;
+
+	if (!ctx || IS_ERR_OR_NULL(ctx->i2c_adap))
+		return -ENODEV;
+
+	jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_RED, REG_DMR_SEG_TH, &valR);
+	jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_GREEN, REG_DMR_SEG_TH, &valG);
+	jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_BLUE, REG_DMR_SEG_TH, &valB);
+
+	return scnprintf(buf, PAGE_SIZE, "R: %u\nG: %u\nB: %u\n",
+			 valR & 0x03FF, valG & 0x03FF, valB & 0x03FF);
+}
+
+static ssize_t demura_seg_th_store(struct device *dev, struct device_attribute *attr,
+				   const char *buf, size_t count)
+{
+	struct jbd4040_panel_info *ctx = g_jbd4040_ctx;
+	char *input, *input_free, *token;
+	char *argv[DEF_I2C_JBD4040_MAX_ARGS];
+	int argc = 0, i;
+	uint32_t val;
+	uint8_t dev_addr;
+
+	if (!ctx || IS_ERR_OR_NULL(ctx->i2c_adap))
+		return -ENODEV;
+
+	input = kstrndup(buf, count, GFP_KERNEL);
+	if (!input)
+		return -ENOMEM;
+	input_free = input;
+
+	while ((token = strsep(&input, " \t\n:")) != NULL) {
+		if (*token == '\0')
+			continue;
+		if (argc >= DEF_I2C_JBD4040_MAX_ARGS)
+			break;
+		argv[argc++] = token;
+	}
+
+	if (argc == 1) {
+		if (kstrtou32(argv[0], 0, &val) == 0) {
+			if (val > 1023)
+				val = 1023;
+			jbd4040_i2c_write_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_ALL,
+						REG_DMR_SEG_TH, (uint16_t)(val & 0x03FF));
+			dev_info(dev, "Set ALL panel demura_seg_th to %u\n", val);
+			kfree(input_free);
+			return count;
+		}
+	}
+
+	if (argc == 0 || argc % 2 != 0) {
+		kfree(input_free);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < argc; i += 2) {
+		char *color_str = argv[i];
+		char *val_str = argv[i+1];
+
+		if (kstrtou32(val_str, 0, &val))
+			continue;
+
+		if (val > 1023)
+			val = 1023;
+
+		if (!strcasecmp(color_str, "r"))
+			dev_addr = JBD4040_I2C_ADDR_RED;
+		else if (!strcasecmp(color_str, "g"))
+			dev_addr = JBD4040_I2C_ADDR_GREEN;
+		else if (!strcasecmp(color_str, "b"))
+			dev_addr = JBD4040_I2C_ADDR_BLUE;
+		else if (!strcasecmp(color_str, "all") || !strcasecmp(color_str, "w"))
+			dev_addr = JBD4040_I2C_ADDR_ALL;
+		else
+			continue;
+
+		jbd4040_i2c_write_reg16(ctx->i2c_adap, dev_addr, REG_DMR_SEG_TH,
+					(uint16_t)(val & 0x03FF));
+		dev_info(dev, "Set %s panel demura_seg_th to %u\n", color_str, val);
+	}
+
+	kfree(input_free);
+	return count;
+}
+static DEVICE_ATTR_RW(demura_seg_th);
+
+static ssize_t demura_status_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct jbd4040_panel_info *ctx = g_jbd4040_ctx;
+	uint16_t statR = 0, statG = 0, statB = 0;
+	uint16_t codeR = 0, codeG = 0, codeB = 0;
+
+	if (!ctx || IS_ERR_OR_NULL(ctx->i2c_adap))
+		return -ENODEV;
+
+	jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_RED, REG_FMC_STATUS, &statR);
+	jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_GREEN, REG_FMC_STATUS, &statG);
+	jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_BLUE, REG_FMC_STATUS, &statB);
+
+	jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_RED, REG_ST_CODE3, &codeR);
+	jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_GREEN, REG_ST_CODE3, &codeG);
+	jbd4040_i2c_read_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_BLUE, REG_ST_CODE3, &codeB);
+
+	return scnprintf(buf, PAGE_SIZE,
+			 "R: status=0x%04x (flash_done=%u, dmr1_err=%u, dmr2_err=%u), cks_dmr1=0x%02x, cks_dmr2=0x%02x\n"
+			 "G: status=0x%04x (flash_done=%u, dmr1_err=%u, dmr2_err=%u), cks_dmr1=0x%02x, cks_dmr2=0x%02x\n"
+			 "B: status=0x%04x (flash_done=%u, dmr1_err=%u, dmr2_err=%u), cks_dmr1=0x%02x, cks_dmr2=0x%02x\n",
+			 statR, statR & 1, (statR >> 4) & 1, (statR >> 5) & 1, codeR & 0xFF, (codeR >> 8) & 0xFF,
+			 statG, statG & 1, (statG >> 4) & 1, (statG >> 5) & 1, codeG & 0xFF, (codeG >> 8) & 0xFF,
+			 statB, statB & 1, (statB >> 4) & 1, (statB >> 5) & 1, codeB & 0xFF, (codeB >> 8) & 0xFF);
+}
+static DEVICE_ATTR_RO(demura_status);
+
+/* Demura Binary Table Attributes */
+static ssize_t jbd4040_demura_table_read_channel(struct file *filp, struct kobject *kobj,
+						 struct bin_attribute *bin_attr,
+						 char *buf, loff_t off, size_t count,
+						 uint8_t dev_addr)
+{
+	struct jbd4040_panel_info *ctx = g_jbd4040_ctx;
+	size_t remaining;
+	size_t done = 0;
+	int ret = 0;
+
+	if (!ctx || IS_ERR_OR_NULL(ctx->i2c_adap))
+		return -ENODEV;
+
+	if (off >= JBD4040_DEMURA_TABLE_SIZE)
+		return 0;
+
+	if (off + count > JBD4040_DEMURA_TABLE_SIZE)
+		count = JBD4040_DEMURA_TABLE_SIZE - off;
+
+	remaining = count;
+	while (remaining > 0) {
+		size_t chunk_len = min_t(size_t, remaining, 1024);
+		uint32_t reg_addr = JBD4040_DEMURA_TABLE_ADDR + off + done;
+
+		ret = jbd4040_i2c_read_block(ctx->i2c_adap, dev_addr,
+					     reg_addr, (uint8_t *)(buf + done), chunk_len);
+		if (ret < 0) {
+			pr_err("[JBD4040] Demura table read failed at off 0x%llx (dev 0x%02x): %d\n",
+			       off + done, dev_addr, ret);
+			return done ? done : ret;
+		}
+
+		done += chunk_len;
+		remaining -= chunk_len;
+	}
+
+	return done;
+}
+
+static ssize_t demura_table_r_read(struct file *filp, struct kobject *kobj,
+				   struct bin_attribute *bin_attr,
+				   char *buf, loff_t off, size_t count)
+{
+	return jbd4040_demura_table_read_channel(filp, kobj, bin_attr, buf, off, count,
+						JBD4040_I2C_ADDR_RED);
+}
+static BIN_ATTR_RO(demura_table_r, JBD4040_DEMURA_TABLE_SIZE);
+
+static ssize_t demura_table_g_read(struct file *filp, struct kobject *kobj,
+				   struct bin_attribute *bin_attr,
+				   char *buf, loff_t off, size_t count)
+{
+	return jbd4040_demura_table_read_channel(filp, kobj, bin_attr, buf, off, count,
+						JBD4040_I2C_ADDR_GREEN);
+}
+static BIN_ATTR_RO(demura_table_g, JBD4040_DEMURA_TABLE_SIZE);
+
+static ssize_t demura_table_b_read(struct file *filp, struct kobject *kobj,
+				   struct bin_attribute *bin_attr,
+				   char *buf, loff_t off, size_t count)
+{
+	return jbd4040_demura_table_read_channel(filp, kobj, bin_attr, buf, off, count,
+						JBD4040_I2C_ADDR_BLUE);
+}
+static BIN_ATTR_RO(demura_table_b, JBD4040_DEMURA_TABLE_SIZE);
+
+static struct bin_attribute *jbd4040_bin_attrs[] = {
+	&bin_attr_demura_table_r,
+	&bin_attr_demura_table_g,
+	&bin_attr_demura_table_b,
+	NULL,
+};
+
 static struct attribute *jbd4040_attrs[] = {
 	&dev_attr_luminance.attr,
 	&dev_attr_current.attr,
@@ -1689,11 +2266,17 @@ static struct attribute *jbd4040_attrs[] = {
 	&dev_attr_gamma.attr,
 	&dev_attr_pl_osc_trim_en.attr,
 	&dev_attr_pl_osc_trim.attr,
+	&dev_attr_demura_en.attr,
+	&dev_attr_demura_remap.attr,
+	&dev_attr_demura_dsc.attr,
+	&dev_attr_demura_seg_th.attr,
+	&dev_attr_demura_status.attr,
 	NULL,
 };
 
 static const struct attribute_group jbd4040_attr_group = {
 	.attrs = jbd4040_attrs,
+	.bin_attrs = jbd4040_bin_attrs,
 };
 
 /* =========================================================================

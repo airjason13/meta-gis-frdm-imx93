@@ -5,6 +5,7 @@ SRC_URI += "file://awe_show.mp4 \
             file://target_lock.mp4 \
             file://GenshinImpact.mp4 \
             file://test-materials \
+            file://18_AR_Text_PPD_legibility_1080p.png \
             "
 
 
@@ -22,6 +23,7 @@ do_install() {
 	cp target_lock.mp4 ${D}/root/MediaFiles/Media 
 	cp GenshinImpact.mp4 ${D}/root/MediaFiles/Media  
 	install -m 0644 ${S}/test-materials/*.png ${D}/root/MediaFiles/Snapshots/
+	install -m 0644 ${S}/18_AR_Text_PPD_legibility_1080p.png ${D}/root/MediaFiles/Snapshots/
 }
 
 FILES:${PN} += " \

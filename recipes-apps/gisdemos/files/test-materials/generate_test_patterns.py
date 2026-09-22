@@ -606,9 +606,9 @@ def gen_12_ar_text_ppd():
     img = Image.new('RGB', (W, H), (0, 0, 0))
     draw = ImageDraw.Draw(img)
 
-    # 384 -> 256 -> 192 -> 128 -> 192 -> 256 -> 384 (6:4:3:2:3:4:6 ratio)
-    # Scaled by ~0.59 to fit 1080p canvas with comfortable gaps
-    sizes = [227, 151, 113, 76, 113, 151, 227]
+    # 384 -> 320 -> 256 -> 192 -> 256 -> 320 -> 384 (6:5:4:3:4:5:6 ratio)
+    # Scaled by 0.5 to fit 1080p canvas with comfortable gaps
+    sizes = [192, 160, 128, 96, 128, 160, 192]
 
     row_data = []
     for sz in sizes:
@@ -630,7 +630,7 @@ def gen_12_ar_text_ppd():
 
     total_h = sum(r['h'] for r in row_data)
     rem = H - total_h
-    gaps = [16, 14, 11, 11, 14, 16]
+    gaps = [15, 14, 12, 12, 14, 15]
     top_margin = (rem - sum(gaps)) // 2
 
     cur_y = top_margin
@@ -644,6 +644,52 @@ def gen_12_ar_text_ppd():
 
     img.save(os.path.join(OUTPUT_DIR, "12_AR_Text_PPD_Legibility_1080p.png"))
     print("Generated 12_AR_Text_PPD_Legibility_1080p.png")
+
+# ==========================================
+# 18. AR Text PPD Legibility (Min size 128, 7 rows)
+# ==========================================
+def gen_18_ar_text_ppd():
+    img = Image.new('RGB', (W, H), (0, 0, 0))
+    draw = ImageDraw.Draw(img)
+
+    # 180 -> 160 -> 140 -> 128 -> 140 -> 160 -> 180
+    sizes = [180, 160, 140, 128, 140, 160, 180]
+
+    row_data = []
+    for sz in sizes:
+        f = ImageFont.truetype(SANS_BOLD_PATH, sz)
+        line = ''
+        c = 65  # Start from 'A' on every row
+        while True:
+            test = line + chr(c)
+            if f.getlength(test) > (W - 20):
+                break
+            line = test
+            c += 1
+            if c > 90:
+                c = 65
+        bb = draw.textbbox((0, 0), line, font=f, anchor='lt')
+        lw = bb[2] - bb[0]
+        lh = bb[3] - bb[1]
+        row_data.append({'sz': sz, 'font': f, 'line': line, 'w': lw, 'h': lh})
+
+    total_h = sum(r['h'] for r in row_data)
+    rem = H - total_h
+    gaps = [10, 9, 8, 8, 9, 10]
+    top_margin = (rem - sum(gaps)) // 2
+
+    cur_y = top_margin
+    for i, r in enumerate(row_data):
+        x = (W - r['w']) // 2
+        draw.text((x, cur_y), r['line'], fill=(0, 255, 0), font=r['font'], anchor='lt')
+        if i < len(gaps):
+            cur_y += r['h'] + gaps[i]
+        else:
+            cur_y += r['h']
+
+    out_file = os.path.join(OUTPUT_DIR, "18_AR_Text_PPD_legibility_1080p.png")
+    img.save(out_file)
+    print("Generated 18_AR_Text_PPD_legibility_1080p.png")
 
 # ==========================================
 # 13-17. Real-world Photographic Images & Composite
@@ -726,4 +772,5 @@ if __name__ == "__main__":
     gen_11_chromatic_aberration()
     gen_12_ar_text_ppd()
     process_photo_references()
+    gen_18_ar_text_ppd()
     print("All test patterns successfully generated!")

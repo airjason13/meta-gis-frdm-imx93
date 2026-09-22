@@ -781,6 +781,10 @@ static int jbd4020_panel_probe(struct mipi_dsi_device *dsi)
 		return -ENOMEM;
 
 	ctx->desc = of_device_get_match_data(&dsi->dev);
+	if (!ctx->desc) {
+		dev_err(&dsi->dev, "missing device match desc data\n");
+		return -ENODEV;
+	}
 	dsi->mode_flags = ctx->desc->mode_flags;
 	dsi->format = ctx->desc->format;
 	dsi->lanes = ctx->desc->lanes;
@@ -921,6 +925,7 @@ static const struct of_device_id jbd4020_of_match[] = {
 		.compatible = "jbd,jbd4020-right",
 		.data = &jbd4020_desc,
 	},
+	{ /* sentinel */ }
 };
 MODULE_DEVICE_TABLE(of, jbd4020_of_match);
 

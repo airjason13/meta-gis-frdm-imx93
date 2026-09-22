@@ -93,8 +93,9 @@ BUILD_TIMESTAMP_SSID = "${@time.strftime('%m%d%H%M', time.localtime())}"
 update_uap0_ssid() {
     CONF_FILE="${IMAGE_ROOTFS}/etc/uap0_hostapd.conf"
     if [ -f "$CONF_FILE" ]; then
-        sed -i "s/^ssid=.*/ssid=GiS-${BUILD_TIMESTAMP_SSID}/" "$CONF_FILE"
-        bbnote "Updated uap0 SSID to GiS-${BUILD_TIMESTAMP_SSID} in $CONF_FILE"
+        sed -i "s/^ssid=.*/ssid=GiS_AR_${BUILD_TIMESTAMP_SSID}/" "$CONF_FILE"
+        echo "${BUILD_TIMESTAMP_SSID}" > ${IMAGE_ROOTFS}/etc/build_timestamp
+        bbnote "Initialized uap0 SSID to GiS_AR_${BUILD_TIMESTAMP_SSID} and saved /etc/build_timestamp"
     fi
 }
 

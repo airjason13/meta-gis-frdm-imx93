@@ -37,12 +37,17 @@
 #define REG_GAM_CFG             0x200200
 #define REG_DMR_CFG             0x200202
 #define REG_DMR_REMAP_VAL       0x200204
+#define REG_DSC_CFG             0x200206
+#define REG_DMR_SEG_TH          0x200208
 #define REG_PL_SELF_TEST_CFG    0x200300
 #define REG_IMG_FLIP            0x20020e
 #define REG_PL_CLEAR            0x200304
 #define REG_PVT_CTL             0x200402
 #define REG_PVT_DATA            0x200404
 #define REG_FLAG_MASK           0x200500
+#define REG_FMC_CFG             0x200c00
+#define REG_FMC_STATUS          0x200c02
+#define REG_ST_CODE3            0x200c16
 #define REG_PL_CFG              0x200a00
 #define REG_DISP_CTL            0x200a02
 #define REG_PL_SYNC             0x200a04
@@ -66,6 +71,8 @@
 #define REG_EFUSE_REG_SW        0x200d30
 #define REG_OSC_TRIM            0x200d3a
 
+#define JBD4040_DEMURA_TABLE_ADDR 0x210000
+#define JBD4040_DEMURA_TABLE_SIZE 204800
 #define JBD4040_GAMMA_TABLE_0_ADDR 0x250000
 
 #define JBD4040_DEV_NAME        "jbd4040"
