@@ -218,6 +218,43 @@ static int jbd4040_i2c_read_block(struct i2c_adapter *adap, uint8_t dev_addr,
 	return 0;
 }
 
+static int jbd4040_i2c_write_block(struct i2c_adapter *adap, uint8_t dev_addr,
+				   uint32_t reg, const uint8_t *buf, size_t len)
+{
+	uint8_t *tx_buf;
+	struct i2c_msg msg;
+	int ret;
+
+	if (IS_ERR_OR_NULL(adap))
+		return -ENODEV;
+
+	tx_buf = kmalloc(3 + len, GFP_KERNEL);
+	if (!tx_buf)
+		return -ENOMEM;
+
+	/* 24-bit register address (Big-Endian) */
+	tx_buf[0] = (reg >> 16) & 0xFF;
+	tx_buf[1] = (reg >> 8) & 0xFF;
+	tx_buf[2] = reg & 0xFF;
+	memcpy(&tx_buf[3], buf, len);
+
+	msg.addr = dev_addr;
+	msg.flags = 0;
+	msg.len = 3 + len;
+	msg.buf = tx_buf;
+
+	ret = i2c_transfer(adap, &msg, 1);
+	kfree(tx_buf);
+
+	if (ret != 1) {
+		pr_err("[JBD4040] I2C block write failed: reg 0x%06X, len %zu (addr 0x%02X), ret=%d\n",
+		       reg, len, dev_addr, ret);
+		return (ret < 0) ? ret : -EIO;
+	}
+
+	return 0;
+}
+
 static int jbd4040_update_gamma(struct i2c_adapter *adap, uint8_t dev_addr,
 				const uint16_t *table)
 {
@@ -2177,6 +2214,83 @@ static ssize_t demura_status_show(struct device *dev, struct device_attribute *a
 }
 static DEVICE_ATTR_RO(demura_status);
 
+/* =========================================================================
+ * Test Interface: Switch Command Mode and Write Test Demura Table via MIPI DCS
+ * ========================================================================= */
+static ssize_t test_demura_table_w_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE,
+			 "JBD4040 MIPI DCS Demura Table Write Test\n"
+			 "Usage: echo 1 > test_demura_table_w\n"
+			 "Action:\n"
+			 "  1. Switch JBD4040 to Command Mode (REG_VID_MODE=0, REG_PL_SYNC=3)\n"
+			 "  2. Enable DCS interface (REG_DCS_EN=1)\n"
+			 "  3. Write test pattern to Demura Table via MIPI DCS\n");
+}
+
+static ssize_t test_demura_table_w_store(struct device *dev, struct device_attribute *attr,
+					 const char *buf, size_t count)
+{
+	struct jbd4040_panel_info *ctx = g_jbd4040_ctx;
+	ssize_t ret;
+	int i;
+
+	if (!ctx)
+		return -ENODEV;
+
+	/* a. 開啟 JBD4040 Command Mode 與 DCS 介面 */
+	dev_info(dev, "[test_demura_table_w] a. Switching to Command Mode...\n");
+	if (ctx->i2c_adap) {
+		/* 切換為 Command Mode (REG_VID_MODE = 0) */
+		jbd4040_i2c_write_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_ALL, REG_VID_MODE, 0x0000);
+		jbd4040_i2c_write_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_ALL, REG_PL_SYNC, 0x0003);
+		/* 啟用 DCS 指令介面 (REG_DCS_EN = 1) */
+		jbd4040_i2c_write_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_ALL, REG_DCS_EN, 0x0001);
+		ctx->vid_mode = false;
+	}
+
+	msleep(10);
+
+	/* b. 利用 MIPI DCS 寫入測試用 R demura table (目標位址: 0x210000) */
+	dev_info(dev, "[test_demura_table_w] b. Writing test R demura table via MIPI DSI/DCS...\n");
+	if (!ctx->dsi) {
+		dev_err(dev, "[test_demura_table_w] DSI device handle is NULL!\n");
+		return -ENODEV;
+	}
+
+	{
+		uint32_t target_addr = JBD4040_DEMURA_TABLE_ADDR;
+		uint8_t generic_buf[4] = {
+			0xFF,
+			(target_addr >> 24) & 0xFF,
+			(target_addr >> 16) & 0xFF,
+			target_addr & 0xFF
+		};
+		uint8_t dcs_buf[257];
+
+		dcs_buf[0] = (target_addr >> 8) & 0xFF; /* Sub-address offset */
+		for (i = 0; i < 256; i++)
+			dcs_buf[1 + i] = (i % 2 == 0) ? 0xA5 : 0x5A;
+
+		/* 1. 先透過 MIPI Generic Write 發送 JBD 選頁位址 (Page Select: 0x210000) */
+		ret = mipi_dsi_generic_write(ctx->dsi, generic_buf, sizeof(generic_buf));
+		if (ret < 0)
+			dev_warn(dev, "[test_demura_table_w] mipi_dsi_generic_write (addr select) ret: %zd\n", ret);
+
+		/* 2. 透過 MIPI DCS 長寫入指令發送測試數據至 Demura SRAM */
+		ret = mipi_dsi_dcs_write_buffer(ctx->dsi, dcs_buf, sizeof(dcs_buf));
+		if (ret < 0) {
+			dev_err(dev, "[test_demura_table_w] mipi_dsi_dcs_write_buffer failed: %zd\n", ret);
+		} else {
+			dev_info(dev, "[test_demura_table_w] MIPI DCS write to 0x%06X sent successfully (%zd bytes)!\n",
+				 target_addr, ret);
+		}
+	}
+
+	return count;
+}
+static DEVICE_ATTR_RW(test_demura_table_w);
+
 /* Demura Binary Table Attributes */
 static ssize_t jbd4040_demura_table_read_channel(struct file *filp, struct kobject *kobj,
 						 struct bin_attribute *bin_attr,
@@ -2217,6 +2331,69 @@ static ssize_t jbd4040_demura_table_read_channel(struct file *filp, struct kobje
 	return done;
 }
 
+static ssize_t jbd4040_demura_table_write_channel(struct file *filp, struct kobject *kobj,
+						  struct bin_attribute *bin_attr,
+						  char *buf, loff_t off, size_t count,
+						  uint8_t dev_addr)
+{
+	struct jbd4040_panel_info *ctx = g_jbd4040_ctx;
+	size_t remaining;
+	size_t done = 0;
+	int ret = 0;
+
+	if (!ctx || IS_ERR_OR_NULL(ctx->i2c_adap))
+		return -ENODEV;
+
+	if (off >= JBD4040_DEMURA_TABLE_SIZE)
+		return -EFBIG;
+
+	if (off + count > JBD4040_DEMURA_TABLE_SIZE)
+		count = JBD4040_DEMURA_TABLE_SIZE - off;
+
+	/*
+	 * 重要保護：寫入 Demura SRAM (0x210000) 必須在 Command Mode 下進行！
+	 * 若處於 Video Mode (60Hz 影像串流讀取)，SRAM 會被繪圖引擎佔用，
+	 * 導致外部 I2C 寫入仲裁衝突逾時 (-110)。因此寫入前若在 Video Mode 則自動切換為 Command Mode。
+	 */
+	if (ctx->vid_mode) {
+		dev_info(&ctx->dsi->dev,
+			 "[JBD4040] Demura I2C write: Switching to Command Mode to release SRAM arbitration...\n");
+		jbd4040_i2c_write_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_ALL, REG_VID_MODE, 0x0000);
+		jbd4040_i2c_write_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_ALL, REG_PL_SYNC, 0x0003);
+		ctx->vid_mode = false;
+		msleep(10);
+	}
+
+	remaining = count;
+	while (remaining > 0) {
+		size_t chunk_len = min_t(size_t, remaining, 1024);
+		uint32_t reg_addr = JBD4040_DEMURA_TABLE_ADDR + off + done;
+
+		ret = jbd4040_i2c_write_block(ctx->i2c_adap, dev_addr,
+					      reg_addr, (const uint8_t *)(buf + done), chunk_len);
+		if (ret < 0) {
+			pr_err("[JBD4040] Demura table write failed at off 0x%llx (dev 0x%02x): %d\n",
+			       off + done, dev_addr, ret);
+			return done ? done : ret;
+		}
+
+		done += chunk_len;
+		remaining -= chunk_len;
+	}
+
+	/* 當完整 204,800 bytes (或結尾區塊) 寫入完成時，自動切回 Video Mode 恢復顯示 */
+	if (off + done >= JBD4040_DEMURA_TABLE_SIZE) {
+		dev_info(&ctx->dsi->dev,
+			 "[JBD4040] Demura table write completed (%zu bytes). Restoring Video Mode...\n",
+			 off + done);
+		jbd4040_i2c_write_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_ALL, REG_VID_MODE, 0x0001);
+		jbd4040_i2c_write_reg16(ctx->i2c_adap, JBD4040_I2C_ADDR_ALL, REG_PL_SYNC, 0x000f);
+		ctx->vid_mode = true;
+	}
+
+	return done;
+}
+
 static ssize_t demura_table_r_read(struct file *filp, struct kobject *kobj,
 				   struct bin_attribute *bin_attr,
 				   char *buf, loff_t off, size_t count)
@@ -2224,7 +2401,15 @@ static ssize_t demura_table_r_read(struct file *filp, struct kobject *kobj,
 	return jbd4040_demura_table_read_channel(filp, kobj, bin_attr, buf, off, count,
 						JBD4040_I2C_ADDR_RED);
 }
-static BIN_ATTR_RO(demura_table_r, JBD4040_DEMURA_TABLE_SIZE);
+
+static ssize_t demura_table_r_write(struct file *filp, struct kobject *kobj,
+				    struct bin_attribute *bin_attr,
+				    char *buf, loff_t off, size_t count)
+{
+	return jbd4040_demura_table_write_channel(filp, kobj, bin_attr, buf, off, count,
+						  JBD4040_I2C_ADDR_RED);
+}
+static BIN_ATTR_RW(demura_table_r, JBD4040_DEMURA_TABLE_SIZE);
 
 static ssize_t demura_table_g_read(struct file *filp, struct kobject *kobj,
 				   struct bin_attribute *bin_attr,
@@ -2233,7 +2418,15 @@ static ssize_t demura_table_g_read(struct file *filp, struct kobject *kobj,
 	return jbd4040_demura_table_read_channel(filp, kobj, bin_attr, buf, off, count,
 						JBD4040_I2C_ADDR_GREEN);
 }
-static BIN_ATTR_RO(demura_table_g, JBD4040_DEMURA_TABLE_SIZE);
+
+static ssize_t demura_table_g_write(struct file *filp, struct kobject *kobj,
+				    struct bin_attribute *bin_attr,
+				    char *buf, loff_t off, size_t count)
+{
+	return jbd4040_demura_table_write_channel(filp, kobj, bin_attr, buf, off, count,
+						  JBD4040_I2C_ADDR_GREEN);
+}
+static BIN_ATTR_RW(demura_table_g, JBD4040_DEMURA_TABLE_SIZE);
 
 static ssize_t demura_table_b_read(struct file *filp, struct kobject *kobj,
 				   struct bin_attribute *bin_attr,
@@ -2242,7 +2435,15 @@ static ssize_t demura_table_b_read(struct file *filp, struct kobject *kobj,
 	return jbd4040_demura_table_read_channel(filp, kobj, bin_attr, buf, off, count,
 						JBD4040_I2C_ADDR_BLUE);
 }
-static BIN_ATTR_RO(demura_table_b, JBD4040_DEMURA_TABLE_SIZE);
+
+static ssize_t demura_table_b_write(struct file *filp, struct kobject *kobj,
+				    struct bin_attribute *bin_attr,
+				    char *buf, loff_t off, size_t count)
+{
+	return jbd4040_demura_table_write_channel(filp, kobj, bin_attr, buf, off, count,
+						  JBD4040_I2C_ADDR_BLUE);
+}
+static BIN_ATTR_RW(demura_table_b, JBD4040_DEMURA_TABLE_SIZE);
 
 static struct bin_attribute *jbd4040_bin_attrs[] = {
 	&bin_attr_demura_table_r,
@@ -2271,6 +2472,7 @@ static struct attribute *jbd4040_attrs[] = {
 	&dev_attr_demura_dsc.attr,
 	&dev_attr_demura_seg_th.attr,
 	&dev_attr_demura_status.attr,
+	&dev_attr_test_demura_table_w.attr,
 	NULL,
 };
 
