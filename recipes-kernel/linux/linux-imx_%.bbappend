@@ -24,6 +24,7 @@ SRC_URI += "file://imx93-gis-frdm-dsi.dts \
             file://0007-add-jbd4040-desc-in-panel-simple.patch \
             file://0008-drm-panel-simple-Add-JBD4040-60Hz-and-30Hz-modes.patch \
             file://0009-add-jbd4040-panel-driver.patch \
+            file://0010-i3c-svc-fix-legacy-i2c-repeated-start-and-odhpp-for-it6263.patch \
             file://imx93-gis-frdm-jbd4020.dts \
             file://imx93-gis-sdmb-jbd4020.dts \
             file://imx93-gis-sdmb-jbd4040.dts \
@@ -35,11 +36,13 @@ SRC_URI += "file://imx93-gis-frdm-dsi.dts \
             file://imx93-gis-frdm-jbd4040-160.dts \
             file://imx93-gis-sdmb.dts \
             file://imx93-gis-frdm-test-jbd4040.dts \
+            file://imx93-gis-frdm-neo.dts \
 	    "
 
 
 KERNEL_DEVICETREE:append = " freescale/imx93-gis-frdm-dsi.dtb \
                              freescale/imx93-gis-frdm.dtb \
+                             freescale/imx93-gis-frdm-neo.dtb \
                              freescale/imx93-gis-frdm-jbd4020.dtb \ 
                              freescale/imx93-gis-sdmb-jbd4020.dtb \ 
                              freescale/imx93-gis-sdmb-jbd4040.dtb \ 
@@ -61,6 +64,8 @@ do_patch:append() {
         ${S}/arch/arm64/boot/dts/freescale/imx93-gis-frdm-dsi.dts
     install -Dm0644 ${WORKDIR}/imx93-gis-frdm.dts \
         ${S}/arch/arm64/boot/dts/freescale/imx93-gis-frdm.dts
+    install -Dm0644 ${WORKDIR}/imx93-gis-frdm-neo.dts \
+        ${S}/arch/arm64/boot/dts/freescale/imx93-gis-frdm-neo.dts
     install -Dm0644 ${WORKDIR}/imx93-gis-sdmb.dts \
         ${S}/arch/arm64/boot/dts/freescale/imx93-gis-sdmb.dts
     install -Dm0644 ${WORKDIR}/imx93-gis-frdm-jbd4020.dts \

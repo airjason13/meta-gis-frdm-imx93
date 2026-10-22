@@ -1,0 +1,110 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright 2024 NXP
+ * Copyright 2026 GIS
+ */
+
+#include "imx93-11x11-frdm.dts"
+#include <dt-bindings/i3c/i3c.h>
+
+/ {
+	model = "NXP i.MX93 11X11 FRDM NEO board";
+	compatible = "gis,imx93-gis-frdm-neo", "fsl,imx93-11x11-frdm", "fsl,imx93";
+
+	aliases {
+		/delete-property/ i2c0;
+	};
+};
+
+/delete-node/ &lpi2c1;
+
+/*
+ * Keep WLAN / PCAL6408 power supply always on so that the on-board PCAL6408
+ * does not sit unpowered on the I3C1 bus and pull down SCL/SDA.
+ */
+&reg_usdhc3_vmmc {
+	regulator-always-on;
+	regulator-boot-on;
+};
+
+&i3c1 {
+	pinctrl-names = "default", "sleep";
+	pinctrl-0 = <&pinctrl_i3c1>;
+	pinctrl-1 = <&pinctrl_i3c1>;
+	/*
+	 * Assert PCAL6408 power (pin 20) via pinctrl-assert-gpios.
+	 * This ensures the I/O expander is powered and defers i3c1 probe
+	 * until the pcal6524 expander on lpi2c2 is ready.
+	 */
+	pinctrl-assert-gpios = <&pcal6524 20 GPIO_ACTIVE_HIGH>;
+	i2c-scl-hz = <400000>;
+	status = "okay";
+
+	/*
+	 * On-board LVDS to HDMI converter (IT6263).
+	 * Connects via I2C/I3C bus (address 0x4c).
+	 * Uses (I2C_FM | I2C_FILTER) to operate in Mixed Fast mode (0x10).
+	 * Hardware reset-gpio is driven by it6263 driver via pcal6524 pin 21
+	 * to ensure the chip receives the required 41ms reset timing.
+	 */
+	lvds_bridge: lvds-to-hdmi-bridge@4c {
+		compatible = "ite,it6263";
+		reg = <0x4c 0x00 (I2C_FM | I2C_FILTER)>;
+		reset-gpio = <&pcal6524 21 GPIO_ACTIVE_LOW>;
+		status = "okay";
+
+		port {
+			it6263_0_in: endpoint {
+				remote-endpoint = <&ldb_out>;
+			};
+		};
+	};
+
+	/*
+	 * On-board GPIO expander (PCAL6408).
+	 */
+	pcal6408: gpio@20 {
+		compatible = "nxp,pcal9554b";
+		reg = <0x20 0x00 (I2C_FM | I2C_FILTER)>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		vcc-supply = <&reg_usdhc3_vmmc>;
+		status = "okay";
+	};
+
+	/*
+	 * External Native I3C Target Device on Header P12 (Pin 7: SCL, Pin 9: SDA)
+	 * For userspace access or dynamic discovery (ENTDAA), Linux I3C bus
+	 * will automatically scan and expose devices in /sys/bus/i3c/devices/
+	 * and /dev/i3c-*.
+	 */
+};
+
+&ldb {
+	status = "okay";
+
+	lvds-channel@0 {
+		status = "okay";
+
+		port@1 {
+			reg = <1>;
+
+			ldb_out: endpoint {
+				remote-endpoint = <&it6263_0_in>;
+			};
+		};
+	};
+};
+
+&ldb_phy {
+	status = "okay";
+};
+
+&iomuxc {
+	pinctrl_i3c1: i3c1grp {
+		fsl,pins = <
+			MX93_PAD_I2C1_SCL__I3C1_SCL	0x40000b9e
+			MX93_PAD_I2C1_SDA__I3C1_SDA	0x40000b9e
+		>;
+	};
+};

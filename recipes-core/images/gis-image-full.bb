@@ -10,6 +10,8 @@ CONFLICT_DISTRO_FEATURES = "directfb"
 
 IMAGE_BOOT_FILES:append = " imx93-gis-frdm-dsi.dtb \
                             imx93-gis-frdm-jbd4020.dtb \
+                            imx93-gis-frdm.dtb \
+                            imx93-gis-frdm-neo.dtb \
                             imx93-gis-sdmb.dtb \
                             imx93-gis-sdmb-jbd4020.dtb \
                             imx93-gis-sdmb-jbd4040.dtb \

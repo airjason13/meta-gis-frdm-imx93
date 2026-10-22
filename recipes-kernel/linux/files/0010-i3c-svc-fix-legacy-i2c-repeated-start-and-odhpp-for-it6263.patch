@@ -1,0 +1,129 @@
+From 3333333333333333333333333333333333333333 Mon Sep 17 00:00:00 2001
+From: Antigravity <antigravity@example.com>
+Date: Wed, 21 Oct 2026 19:45:00 +0800
+Subject: [PATCH] i3c: master: svc: dynamically switch clock for legacy I2C transfers to support IT6263 bridge
+
+On the i.MX93 FRDM board, the I3C1 bus is shared between native I3C targets,
+the on-board PCAL6408 GPIO expander (0x20), and the IT6263 LVDS-to-HDMI
+bridge (0x4c / 0x33).
+
+In Mixed Fast mode:
+The Silvaco I3C Controller defaults to PPBAUD=0 (~41.7ns high period at 24MHz)
+and ODHPP=1 for 12.5MHz I3C SDR operations. However, legacy I2C slave devices
+such as the IT6263 bridge feature internal 50ns glitch filters and require
+standard I2C Fast-Mode timing (t_HIGH >= 600ns) during Repeated Start (Sr).
+With a 41.7ns high pulse, IT6263 filters out the SCL pulse, misses the Repeated
+Start, and fails with -ENXIO (-6) during register read operations.
+
+Furthermore, IT6263 strictly requires Repeated Start without STOP between the
+register offset write and data read phases. Emitting a STOP resets its internal
+address pointer, which also causes regmap_bulk_read to fail with -ENXIO (-6).
+
+Resolve this by:
+1. Precalculating an I2C-compatible MCONFIG (PPBAUD=15, PPLOW=15, ODBAUD=2,
+   ODHPP=1, giving t_HIGH = 666.7ns and ~375kHz clock) in svc_i3c_master_bus_init().
+2. Dynamically programming mconfig_i2c into SVC_I3C_MCONFIG during legacy I2C
+   transfers (SVC_I3C_MCTRL_TYPE_I2C) in svc_i3c_master_start_xfer_locked(),
+   and restoring mconfig_i3c (12.5MHz) immediately upon completion.
+3. Clearing SVC_I3C_MERRWARN before each REQUEST_START_ADDR to eliminate stale
+   status flags.
+4. Preserving standard Repeated Start (cmd->continued = (i + 1 < nxfers)) for all
+   devices.
+
+This allows IT6263 and other legacy I2C devices to reliably execute Repeated Start
+reads while preserving full 12.5MHz performance for native I3C targets on header P12.
+
+Signed-off-by: Antigravity <antigravity@example.com>
+---
+ drivers/i3c/master/svc-i3c-master.c | 50 +++++++++++++++++++++++++++++
+ 1 file changed, 50 insertions(+)
+
+diff --git a/drivers/i3c/master/svc-i3c-master.c b/drivers/i3c/master/svc-i3c-master.c
+index 88dafe3231e7..19029e7aabef 100644
+--- a/drivers/i3c/master/svc-i3c-master.c
++++ b/drivers/i3c/master/svc-i3c-master.c
+@@ -208,6 +208,8 @@ struct svc_i3c_master {
+ 		spinlock_t lock;
+ 	} ibi;
+ 	struct mutex lock;
++	u32 mconfig_i3c;
++	u32 mconfig_i2c;
+ };
+ 
+ /**
+@@ -607,8 +609,45 @@ static int svc_i3c_master_bus_init(struct i3c_master_controller *m)
+ 	      SVC_I3C_MCONFIG_ODHPP(odhpp) |
+ 	      SVC_I3C_MCONFIG_SKEW(0) |
+ 	      SVC_I3C_MCONFIG_I2CBAUD(i2cbaud);
++	master->mconfig_i3c = reg;
+ 	writel(reg, master->regs + SVC_I3C_MCONFIG);
+ 
++	/*
++	 * Precalculate I2C-compatible MCONFIG for legacy I2C transfers.
++	 * In Mixed Fast mode, I3C uses PPBAUD=0 (~41.7ns high period) with ODHPP=1,
++	 * but legacy I2C slaves (like IT6263) have internal 50ns glitch filters and
++	 * require at least 600ns high period (I2C Fast Mode) for Repeated Start.
++	 * Here we configure PPBAUD=15 (giving 666.7ns high period at 24MHz) with
++	 * ODHPP=1 so that Repeated Start is wide enough to be latched by legacy I2C
++	 * slaves without being filtered out.
++	 */
++	{
++		u32 ppbaud_i2c = 15;
++		u32 pplow_i2c = 15;
++		u32 odbaud_i2c = 2;
++		u32 i2cbaud_i2c = 0;
++		unsigned int high_period_i2c_ns, od_low_i2c_ns;
++
++		high_period_i2c_ns = (ppbaud_i2c + 1) * fclk_period_ns;
++		od_low_i2c_ns = (odbaud_i2c + 1) * high_period_i2c_ns;
++		if (i2c_period_ns > od_low_i2c_ns * 2) {
++			i2cbaud_i2c = DIV_ROUND_UP(i2c_period_ns, od_low_i2c_ns) - 2;
++			if (i2cbaud_i2c > 15)
++				i2cbaud_i2c = 15;
++		}
++
++		master->mconfig_i2c = SVC_I3C_MCONFIG_MASTER_EN |
++				      SVC_I3C_MCONFIG_DISTO(0) |
++				      SVC_I3C_MCONFIG_HKEEP(0) |
++				      SVC_I3C_MCONFIG_ODSTOP(1) |
++				      SVC_I3C_MCONFIG_PPBAUD(ppbaud_i2c) |
++				      SVC_I3C_MCONFIG_PPLOW(pplow_i2c) |
++				      SVC_I3C_MCONFIG_ODBAUD(odbaud_i2c) |
++				      SVC_I3C_MCONFIG_ODHPP(1) |
++				      SVC_I3C_MCONFIG_SKEW(0) |
++				      SVC_I3C_MCONFIG_I2CBAUD(i2cbaud_i2c);
++	}
++
+ 	/* Master core's registration */
+ 	ret = i3c_master_get_free_addr(m, 0);
+ 	if (ret < 0)
+@@ -1055,6 +1094,7 @@ static int svc_i3c_master_xfer(struct svc_i3c_master *master,
+ 
+ 	/* clean SVC_I3C_MINT_IBIWON w1c bits */
+ 	writel(SVC_I3C_MINT_IBIWON, master->regs + SVC_I3C_MSTATUS);
++	svc_i3c_master_clear_merrwarn(master);
+ 
+ 	writel(SVC_I3C_MCTRL_REQUEST_START_ADDR |
+ 	       xfer_type |
+@@ -1175,6 +1215,9 @@ static void svc_i3c_master_start_xfer_locked(struct svc_i3c_master *master)
+ 	if (!xfer)
+ 		return;
+ 
++	if (xfer->type == SVC_I3C_MCTRL_TYPE_I2C)
++		writel(master->mconfig_i2c, master->regs + SVC_I3C_MCONFIG);
++
+ 	svc_i3c_master_clear_merrwarn(master);
+ 	svc_i3c_master_flush_fifo(master);
+ 
+@@ -1193,6 +1236,9 @@ static void svc_i3c_master_start_xfer_locked(struct svc_i3c_master *master)
+ 			break;
+ 	}
+ 
++	if (xfer->type == SVC_I3C_MCTRL_TYPE_I2C)
++		writel(master->mconfig_i3c, master->regs + SVC_I3C_MCONFIG);
++
+ 	xfer->ret = ret;
+ 	complete(&xfer->comp);
+ 
+-- 
+2.34.1
